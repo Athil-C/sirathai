@@ -36,6 +36,11 @@ app.use('/api/gamification', gamificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/mufti', muftiRoutes);
 
+// Welcome route
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the SiratAI API Backend', status: 'active', healthCheck: '/api/health' });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'SiratAI API is running', timestamp: new Date().toISOString() });
@@ -52,9 +57,15 @@ app.use((err, req, res, next) => {
 
 // Connect to DB and start server
 connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 SiratAI Server running on port ${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`🚀 SiratAI Server running on port ${PORT}`);
+    });
+  } else {
+    console.log('✅ Server running in Vercel serverless mode');
+  }
+}).catch(err => {
+  console.error('Failed to connect to database or start server:', err);
 });
 
 export default app;
