@@ -142,9 +142,9 @@ const AdminDashboard = () => {
                 <div className="space-y-2">
                   {muftis.map(m => (
                     <div key={m._id} className="flex items-center gap-3 p-3 bg-dark-800/40 rounded-xl">
-                      <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-400 text-xs font-bold">{m.name?.charAt(0)}</div>
+                      <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 text-xs font-bold">{m.name?.charAt(0)}</div>
                       <div className="flex-1"><p className="text-sm text-dark-100 font-medium">{m.name}</p><p className="text-xs text-dark-500">{m.email}</p></div>
-                      <span className="text-xs px-2 py-0.5 rounded bg-gold-500/10 text-gold-400 capitalize">{m.muftiCategory || 'General'}</span>
+                      <span className="text-xs px-2 py-0.5 rounded bg-primary-500/10 text-primary-400 capitalize">{m.muftiCategory || 'General'}</span>
                       <span className={`text-xs px-2 py-0.5 rounded ${m.isSuspended ? 'bg-red-500/10 text-red-400' : 'bg-primary-500/10 text-primary-400'}`}>{m.isSuspended ? 'Suspended' : 'Active'}</span>
                     </div>
                   ))}
@@ -171,16 +171,16 @@ const AdminDashboard = () => {
                 <option value="">All Roles</option><option value="student">Students</option><option value="mufti">Muftis</option><option value="admin">Admins</option>
               </select>
               <button onClick={() => { setForm({ role: 'student' }); setModal('addUser'); }} className="btn-primary flex items-center gap-2 !py-2"><HiPlus /> Add User</button>
-              <button onClick={() => { setForm({ role: 'mufti' }); setModal('addUser'); }} className="bg-gold-500/20 text-gold-400 border border-gold-500/30 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-gold-500/30 transition-all"><HiPlus /> Add Mufti</button>
+              <button onClick={() => { setForm({ role: 'mufti' }); setModal('addUser'); }} className="bg-primary-500/20 text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-primary-500/30 transition-all"><HiPlus /> Add Mufti</button>
             </div>
             <div className="glass-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-dark-700">{['User','Email (Gmail)','Role','Status','Registered','Actions'].map(h=><th key={h} className="px-4 py-3 text-left text-xs text-dark-400 font-semibold">{h}</th>)}</tr></thead>
                 <tbody>{filteredUsers.map(u=>(
                   <tr key={u._id} className="border-b border-dark-700/30 hover:bg-dark-800/30">
-                    <td className="px-4 py-3"><div className="flex items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${u.role==='mufti'?'bg-gradient-to-r from-gold-500 to-gold-600':'bg-gradient-emerald'}`}>{u.name?.charAt(0)}</div><span className="text-dark-100 font-medium">{u.name}</span></div></td>
+                    <td className="px-4 py-3"><div className="flex items-center gap-2"><div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${u.role==='mufti'?'bg-gradient-emerald':'bg-gradient-emerald'}`}>{u.name?.charAt(0)}</div><span className="text-dark-100 font-medium">{u.name}</span></div></td>
                     <td className="px-4 py-3"><div className="flex items-center gap-1.5 text-dark-300"><HiMail className="text-dark-500" />{u.email}</div></td>
-                    <td className="px-4 py-3"><span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${u.role==='admin'?'bg-red-500/20 text-red-400 border-red-500/30':u.role==='mufti'?'bg-gold-500/20 text-gold-400 border-gold-500/30':'bg-primary-500/20 text-primary-400 border-primary-500/30'}`}>{u.role}</span></td>
+                    <td className="px-4 py-3"><span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${u.role==='admin'?'bg-red-500/20 text-red-400 border-red-500/30':u.role==='mufti'?'bg-primary-500/20 text-primary-400 border-primary-500/30':'bg-primary-500/20 text-primary-400 border-primary-500/30'}`}>{u.role}</span></td>
                     <td className="px-4 py-3"><span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${u.isSuspended?'bg-red-500/20 text-red-400 border-red-500/30':'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>{u.isSuspended?'Suspended':'Active'}</span></td>
                     <td className="px-4 py-3"><div className="flex items-center gap-1.5 text-dark-400 text-xs"><HiClock />{fmtDate(u.createdAt)}</div></td>
                     <td className="px-4 py-3">

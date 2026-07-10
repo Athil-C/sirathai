@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#faf6f3',
-          100: '#f3e8df',
-          200: '#e7cdbd',
-          300: '#d6ab91',
-          400: '#be8261',
-          500: '#6f4e37', // Rich Brown (#6F4E37)
-          600: '#64432d',
-          700: '#533522',
-          800: '#432918',
-          900: '#382012',
-          950: '#1e0e07',
+          50: '#f0fbf7',
+          100: '#daf7ec',
+          200: '#b7eed9',
+          300: '#81deb9',
+          400: '#47c595',
+          500: '#004b39', // Deep Emerald Green (#004B39)
+          600: '#003e2f',
+          700: '#003126',
+          800: '#00251d',
+          900: '#001c15',
+          950: '#000f0c',
         },
         gold: {
           50: '#faf7f0',
@@ -45,18 +45,18 @@ export default {
           900: '#523814',
         },
         dark: {
-          50: '#20170f',  // Darkest text (mapped to dark-50 for body text)
-          100: '#33281c', // Main headings
-          205: '#3f3224',
-          200: '#4a3c2c', // Subheadings
-          300: '#6a5842', // Secondary body
-          400: '#85735b', // Muted text
-          500: '#a5947c', // Placeholders
-          600: '#c4b59d', // Gray borders
-          700: '#dfd3bf', // Sub-pixel borders
-          800: '#e8dfd0', // Border accent
-          900: '#f0eae1', // Card backdrop / light container
-          950: '#f8f4ec', // Soft Cream / Beige background (#F8F4EC)
+          50: '#0a100d',  // Darkest text/headings (very dark slate-green)
+          100: '#15221b', // Main headings
+          205: '#203227',
+          200: '#2b3f33', // Subheadings
+          300: '#4d6255', // Secondary body
+          400: '#6c8174', // Muted text
+          500: '#8c9f94', // Placeholders
+          600: '#adbeb4', // Gray borders
+          700: '#cedad3', // Sub-pixel borders
+          800: '#eef3f0', // Border accent
+          900: '#f4f8f6', // Card backdrop
+          950: '#fafbf9', // Soft Sage Cream background
         },
       },
       fontFamily: {
@@ -66,9 +66,9 @@ export default {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-islamic': 'linear-gradient(135deg, #fdfbf7 0%, #f8f4ec 50%, #f0eae1 100%)',
+        'gradient-islamic': 'linear-gradient(135deg, #fafbf9 0%, #f4f8f6 50%, #eef3f0 100%)',
         'gradient-gold': 'linear-gradient(135deg, #c8a46b 0%, #a9874f 100%)',
-        'gradient-emerald': 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        'gradient-emerald': 'linear-gradient(135deg, #005a45 0%, #004b39 100%)',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',
@@ -86,8 +86,8 @@ export default {
           '50%': { transform: 'translateY(-20px)' },
         },
         glow: {
-          '0%': { boxShadow: '0 2px 8px rgba(111, 78, 55, 0.08)' },
-          '100%': { boxShadow: '0 10px 30px rgba(111, 78, 55, 0.2)' },
+          '0%': { boxShadow: '0 2px 8px rgba(0, 75, 57, 0.06)' },
+          '100%': { boxShadow: '0 10px 30px rgba(0, 75, 57, 0.15)' },
         },
         slideUp: {
           '0%': { transform: 'translateY(20px)', opacity: '0' },
@@ -107,11 +107,11 @@ export default {
         },
       },
       boxShadow: {
-        'glow-sm': '0 2px 8px rgba(111, 78, 55, 0.08)',
-        'glow': '0 4px 20px rgba(111, 78, 55, 0.12)',
-        'glow-lg': '0 10px 30px rgba(111, 78, 55, 0.16)',
+        'glow-sm': '0 2px 8px rgba(0, 75, 57, 0.06)',
+        'glow': '0 4px 20px rgba(0, 75, 57, 0.08)',
+        'glow-lg': '0 10px 30px rgba(0, 75, 57, 0.12)',
         'glow-gold': '0 4px 20px rgba(200, 164, 107, 0.2)',
-        'glass': '0 8px 32px rgba(51, 40, 28, 0.03)',
+        'glass': '0 8px 32px rgba(21, 34, 27, 0.02)',
       },
     },
   },

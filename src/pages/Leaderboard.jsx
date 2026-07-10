@@ -73,7 +73,7 @@ const Leaderboard = () => {
                   return (
                     <motion.div key={idx} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.15 }}
                       className={`text-center ${isFirst ? 'order-2' : idx === 1 ? 'order-1' : 'order-3'}`}>
-                      <div className={`relative mx-auto mb-3 ${isFirst ? 'w-20 h-20' : 'w-16 h-16'} rounded-full bg-gradient-to-br ${isFirst ? 'from-gold-400 to-gold-600 shadow-glow-gold' : 'from-dark-600 to-dark-700'} flex items-center justify-center`}>
+                      <div className={`relative mx-auto mb-3 ${isFirst ? 'w-20 h-20' : 'w-16 h-16'} rounded-full ${isFirst ? 'bg-gradient-to-br from-gold-400 to-gold-600 shadow-glow-gold' : 'bg-gradient-emerald'} flex items-center justify-center`}>
                         <span className={`font-bold text-white ${isFirst ? 'text-2xl' : 'text-xl'}`}>{u.name?.charAt(0)}</span>
                         <span className="absolute -bottom-1 text-2xl">{medals[idx]}</span>
                       </div>
@@ -93,7 +93,7 @@ const Leaderboard = () => {
                   <span className={`w-8 text-center font-bold ${i < 3 ? 'text-primary-400' : 'text-dark-500'}`}>
                     {i < 3 ? medals[i] : i + 1}
                   </span>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-dark-600 to-dark-700 flex items-center justify-center text-white font-bold text-sm">
+                  <div className="w-10 h-10 rounded-full bg-gradient-emerald flex items-center justify-center text-white font-bold text-sm">
                     {u.name?.charAt(0)}
                   </div>
                   <div className="flex-1">

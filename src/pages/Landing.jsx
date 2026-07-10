@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiAcademicCap, HiLightningBolt, HiUserGroup, HiStar, HiPlay, HiShieldCheck } from 'react-icons/hi';
 import { FaMosque, FaQuran, FaPray, FaHandsHelping } from 'react-icons/fa';
+import logo from '../assets/logo.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -9,20 +10,56 @@ const fadeUp = {
 };
 
 const Landing = () => {
-  const features = [
-    { icon: <HiAcademicCap className="text-3xl" />, title: '4 Learning Paths', desc: 'Thareeq, Fiqh, Quran & Aqeeda — structured from beginner to mastery', color: 'from-primary-500 to-primary-600' },
-    { icon: <FaPray className="text-3xl" />, title: 'Worship Training', desc: 'Learn Salah & Wudu with animated guides and AI webcam feedback', color: 'from-accent-500 to-accent-600' },
-    { icon: <FaQuran className="text-3xl" />, title: 'Quran Recitation', desc: 'Listen, record, and compare your voice against reference audio', color: 'from-gold-500 to-gold-600' },
-    { icon: <HiLightningBolt className="text-3xl" />, title: 'Gamified Journey', desc: 'Earn XP, coins, badges, and maintain streaks like Duolingo', color: 'from-orange-500 to-red-500' },
-    { icon: <HiShieldCheck className="text-3xl" />, title: 'Ask a Mufti', desc: 'Get answers from verified Islamic scholars in each community', color: 'from-teal-500 to-cyan-600' },
-    { icon: <HiUserGroup className="text-3xl" />, title: '4 Communities', desc: 'Join path-specific communities moderated by expert Muftis', color: 'from-purple-500 to-pink-500' },
-  ];
+    const features = [
+      { icon: <HiAcademicCap className="text-3xl" />, title: '4 Learning Paths', desc: 'Thareeq, Fiqh, Quran & Aqeeda — structured from beginner to mastery', color: 'from-primary-600 to-primary-500' },
+      { icon: <FaPray className="text-3xl" />, title: 'Worship Training', desc: 'Learn Salah & Wudu with animated guides and AI webcam feedback', color: 'from-primary-600 to-primary-400' },
+      { icon: <FaQuran className="text-3xl" />, title: 'Quran Recitation', desc: 'Listen, record, and compare your voice against reference audio', color: 'from-primary-500 to-primary-400' },
+      { icon: <HiLightningBolt className="text-3xl" />, title: 'Gamified Journey', desc: 'Earn XP, coins, badges, and maintain streaks like Duolingo', color: 'from-primary-600 to-primary-500' },
+      { icon: <HiShieldCheck className="text-3xl" />, title: 'Ask a Mufti', desc: 'Get answers from verified Islamic scholars in each community', color: 'from-primary-600 to-primary-400' },
+      { icon: <HiUserGroup className="text-3xl" />, title: '4 Communities', desc: 'Join path-specific communities moderated by expert Muftis', color: 'from-primary-500 to-primary-400' },
+    ];
 
   const paths = [
-    { icon: '🟢', name: 'Thareeq', desc: 'Islamic way of life, daily duas, Salah & Wudu training', lessons: '40+' },
-    { icon: '🔵', name: 'Fiqh', desc: 'Islamic jurisprudence, worship rules, practical guidance', lessons: '50+' },
-    { icon: '🟡', name: 'Quran', desc: 'Arabic alphabet, Tajweed, recitation & memorization', lessons: '50+' },
-    { icon: '🟣', name: 'Aqeeda', desc: 'Islamic creed, Tawheed, Prophets, Hereafter', lessons: '40+' },
+    {
+      icon: (
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-glow">
+          <FaMosque className="text-3xl" />
+        </div>
+      ),
+      name: 'Thareeq',
+      desc: 'Islamic way of life, daily duas, Salah & Wudu training',
+      lessons: '40+'
+    },
+    {
+      icon: (
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-glow">
+          <HiShieldCheck className="text-3xl" />
+        </div>
+      ),
+      name: 'Fiqh',
+      desc: 'Islamic jurisprudence, worship rules, practical guidance',
+      lessons: '50+'
+    },
+    {
+      icon: (
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white shadow-glow">
+          <FaQuran className="text-3xl" />
+        </div>
+      ),
+      name: 'Quran',
+      desc: 'Arabic alphabet, Tajweed, recitation & memorization',
+      lessons: '50+'
+    },
+    {
+      icon: (
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white shadow-glow">
+          <FaPray className="text-3xl" />
+        </div>
+      ),
+      name: 'Aqeeda',
+      desc: 'Islamic creed, Tawheed, Prophets, Hereafter',
+      lessons: '40+'
+    },
   ];
 
   return (
@@ -133,7 +170,7 @@ const Landing = () => {
                 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}
                 className="glass-card-hover p-6 text-center group"
               >
-                <div className="text-5xl mb-4">{path.icon}</div>
+                <div className="mb-6 flex justify-center">{path.icon}</div>
                 <h3 className="text-xl font-bold text-dark-100 mb-2">{path.name}</h3>
                 <p className="text-dark-400 text-sm mb-4">{path.desc}</p>
                 <span className="badge-success">{path.lessons} Lessons</span>
@@ -165,11 +202,11 @@ const Landing = () => {
       {/* Footer */}
       <footer className="py-12 px-4 border-t border-dark-800">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-emerald flex items-center justify-center text-white font-bold text-sm">S</div>
-            <span className="font-display font-bold text-gradient-primary">SiratAI</span>
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="SiratAI Logo" className="w-12 h-12 object-contain" />
+            <span className="text-xl font-display font-bold text-gradient-primary">SiratAI</span>
           </div>
-          <p className="text-dark-500 text-sm">© 2024 SiratAI. Built with ❤️ for the Muslim Ummah.</p>
+          <p className="text-dark-500 text-sm">© 2026 SiratAI. Built with ❤️ for the Muslim Ummah.</p>
           <div className="flex gap-4">
             <FaHandsHelping className="text-dark-500 hover:text-primary-400 cursor-pointer transition-colors" />
           </div>

@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiChat, HiThumbUp, HiReply, HiCheckCircle, HiExclamationCircle, HiPencilAlt, HiTrash, HiX } from 'react-icons/hi';
+import { HiChat, HiThumbUp, HiReply, HiCheckCircle, HiExclamationCircle, HiPencilAlt, HiTrash, HiX, HiShieldCheck } from 'react-icons/hi';
+import { FaMosque, FaQuran, FaPray } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { getCommunityPosts, createPost, likePost, getComments, addComment, editPost, deletePost } from '../services/api';
 import toast from 'react-hot-toast';
 
 const communities = [
-  { slug: 'thareeq', name: 'Thareeq', icon: '🟢', desc: 'Islamic way of life discussions' },
-  { slug: 'fiqh', name: 'Fiqh', icon: '🔵', desc: 'Islamic jurisprudence Q&A' },
-  { slug: 'quran', name: 'Quran', icon: '🟡', desc: 'Recitation help & tajweed' },
-  { slug: 'aqeeda', name: 'Aqeeda', icon: '🟣', desc: 'Belief & theology discussions' },
+  { slug: 'thareeq', name: 'Thareeq', icon: <FaMosque className="text-primary-500" />, desc: 'Islamic way of life discussions' },
+  { slug: 'fiqh', name: 'Fiqh', icon: <HiShieldCheck className="text-primary-500" />, desc: 'Islamic jurisprudence Q&A' },
+  { slug: 'quran', name: 'Quran', icon: <FaQuran className="text-primary-500" />, desc: 'Recitation help & tajweed' },
+  { slug: 'aqeeda', name: 'Aqeeda', icon: <FaPray className="text-primary-500" />, desc: 'Belief & theology discussions' },
 ];
 
 const Community = () => {

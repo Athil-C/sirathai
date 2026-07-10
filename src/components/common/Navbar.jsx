@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { HiMenu, HiX, HiLogout, HiUser, HiAcademicCap, HiHome, HiUserGroup, HiChartBar, HiCog, HiMail } from 'react-icons/hi';
 import { FaFire, FaCoins, FaStar } from 'react-icons/fa';
 import { useTranslation } from '../../utils/translations';
+import logo from '../../assets/logo.png';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -47,17 +48,13 @@ const Navbar = () => {
   const navLinks = getNavLinks();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/75 backdrop-blur-xl border-b border-dark-800/50 rounded-b-[20px] shadow-[0_4px_24px_rgba(111,78,55,0.04)]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/75 backdrop-blur-xl border-b border-dark-800/50 rounded-b-[20px] shadow-[0_4px_24px_rgba(0,75,57,0.02)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-2 group">
-            <svg className="w-8 h-8 text-primary-500 group-hover:rotate-45 transition-transform duration-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 2L15 9H22L16 14L18 21L12 17L6 21L8 14L2 9H9L12 2Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeLinejoin="round" />
-              <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1" />
-              <path d="M12 8V16M8 12H16" stroke="currentColor" strokeWidth="1" />
-            </svg>
-            <span className="text-xl font-display font-bold text-gradient-primary hidden sm:block">
+          <Link to={user ? '/dashboard' : '/'} className="flex items-center gap-3 group">
+            <img src={logo} alt="SiratAI Logo" className="w-12 h-12 object-contain group-hover:scale-105 transition-transform duration-300" />
+            <span className="text-2xl font-display font-bold text-gradient-primary hidden sm:block">
               SiratAI
             </span>
           </Link>
@@ -80,7 +77,7 @@ const Navbar = () => {
                     {isActive && (
                       <motion.div
                         layoutId="nav-underline"
-                        className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-gold-400 to-gold-500 shadow-glow-gold rounded-full"
+                        className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-primary-400 to-primary-600 shadow-glow rounded-full"
                       />
                     )}
                   </Link>
@@ -112,7 +109,7 @@ const Navbar = () => {
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-dark-800 hover:border-primary-500/30 transition-all shadow-sm"
                   >
-                    <div className="w-7 h-7 rounded-full bg-gradient-gold flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    <div className="w-7 h-7 rounded-full bg-gradient-emerald flex items-center justify-center text-white text-xs font-bold shadow-sm">
                       {user.name?.charAt(0).toUpperCase()}
                     </div>
                     <span className="text-sm font-medium text-dark-200 hidden sm:block">{user.name}</span>

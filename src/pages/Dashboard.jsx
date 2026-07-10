@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getDashboard, getPaths, checkAchievements } from '../services/api';
-import { FaFire, FaCoins, FaStar, FaTrophy, FaBook, FaArrowRight } from 'react-icons/fa';
-import { HiAcademicCap, HiChartBar, HiLightningBolt, HiClock, HiCheckCircle } from 'react-icons/hi';
+import { FaFire, FaCoins, FaStar, FaTrophy, FaBook, FaArrowRight, FaMosque, FaQuran, FaPray } from 'react-icons/fa';
+import { HiAcademicCap, HiChartBar, HiLightningBolt, HiClock, HiCheckCircle, HiShieldCheck } from 'react-icons/hi';
 import { useTranslation } from '../utils/translations';
 import toast from 'react-hot-toast';
 
@@ -83,7 +83,12 @@ const Dashboard = () => {
     localStorage.setItem('siratai_daily_tasks', JSON.stringify(updated));
   };
 
-  const pathIcons = { thareeq: '🟢', fiqh: '🔵', quran: '🟡', aqeeda: '🟣' };
+  const pathIcons = {
+    thareeq: <FaMosque className="text-2xl text-primary-500" />,
+    fiqh: <HiShieldCheck className="text-2xl text-primary-500" />,
+    quran: <FaQuran className="text-2xl text-primary-500" />,
+    aqeeda: <FaPray className="text-2xl text-primary-500" />,
+  };
 
   const xpInfo = user ? {
     currentLevelXp: (user.xp || 0) % 100,
@@ -204,7 +209,7 @@ const Dashboard = () => {
                 {paths.map((path, i) => (
                   <motion.div key={path._id || path.slug} initial="hidden" animate="visible" variants={fadeUp} custom={i + 7}>
                     <Link to={`/paths/${path.slug}`} className="glass-card-hover p-5 flex items-center gap-4 group h-full">
-                      <div className="text-4xl bg-dark-900/50 p-2.5 rounded-2xl border border-dark-800 shadow-sm">{pathIcons[path.slug] || path.icon}</div>
+                      <div className="w-14 h-14 flex items-center justify-center bg-dark-900/50 rounded-2xl border border-dark-800 shadow-sm flex-shrink-0">{pathIcons[path.slug] || path.icon}</div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-dark-100 group-hover:text-primary-600 transition-colors truncate">{path.title}</h3>
                         <p className="text-xs text-dark-400 line-clamp-2 mt-0.5 leading-relaxed">{path.description}</p>
@@ -327,19 +332,19 @@ const Dashboard = () => {
         {/* BOTTOM ROW: Quick Actions */}
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={12} className="pt-4 border-t border-dark-800/80">
           <h2 className="text-xl font-display font-bold text-dark-100 flex items-center gap-2 mb-4">
-            <HiChartBar className="text-gold-500" /> Quick Actions
+            <HiChartBar className="text-primary-500" /> Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Link to="/community" className="glass-card-hover p-6 text-center group flex flex-col items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-accent-500/5 border border-accent-500/10 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-accent-500/10 transition-all shadow-sm">
-                <FaBook className="text-xl text-accent-500" />
+              <div className="w-12 h-12 rounded-full bg-primary-500/5 border border-primary-500/10 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-primary-500/10 transition-all shadow-sm">
+                <FaBook className="text-xl text-primary-500" />
               </div>
               <p className="font-bold text-dark-100 text-sm">{t.community}</p>
               <p className="text-xs text-dark-400 mt-1">Join Islamic discussion forums</p>
             </Link>
             <Link to="/leaderboard" className="glass-card-hover p-6 text-center group flex flex-col items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-gold-500/5 border border-gold-500/10 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-gold-500/10 transition-all shadow-sm">
-                <FaTrophy className="text-xl text-gold-600" />
+              <div className="w-12 h-12 rounded-full bg-primary-500/5 border border-primary-500/10 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-primary-500/10 transition-all shadow-sm">
+                <FaTrophy className="text-xl text-primary-600" />
               </div>
               <p className="font-bold text-dark-100 text-sm">{t.leaderboard}</p>
               <p className="text-xs text-dark-400 mt-1">See rankings and earn badges</p>

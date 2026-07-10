@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { login as loginApi } from '../services/api';
 import { HiMail, HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import logo from '../assets/logo.png';
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -39,9 +40,7 @@ const Login = () => {
       >
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-xl bg-gradient-emerald flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-glow">
-              S
-            </div>
+            <img src={logo} alt="SiratAI Logo" className="w-16 h-16 object-contain mx-auto mb-4" />
             <h1 className="text-2xl font-display font-bold text-dark-100">Welcome Back</h1>
             <p className="text-dark-400 text-sm mt-1">Continue your journey on the straight path</p>
           </div>

@@ -1,15 +1,51 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiLockClosed, HiCheck, HiStar, HiArrowLeft } from 'react-icons/hi';
-import { FaTrophy } from 'react-icons/fa';
+import { HiLockClosed, HiCheck, HiStar, HiArrowLeft, HiShieldCheck } from 'react-icons/hi';
+import { FaTrophy, FaMosque, FaQuran, FaPray } from 'react-icons/fa';
 import { getPathBySlug } from '../services/api';
 
 const pathInfo = {
-  thareeq: { name: 'Thareeq', icon: '🟢', color: 'primary', gradient: 'from-emerald-500 to-emerald-600' },
-  fiqh: { name: 'Fiqh', icon: '🔵', color: 'blue', gradient: 'from-blue-500 to-blue-600' },
-  quran: { name: 'Quran', icon: '🟡', color: 'yellow', gradient: 'from-yellow-500 to-amber-600' },
-  aqeeda: { name: 'Aqeeda', icon: '🟣', color: 'purple', gradient: 'from-purple-500 to-purple-600' },
+  thareeq: {
+    name: 'Thareeq',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-glow">
+        <FaMosque className="text-3xl" />
+      </div>
+    ),
+    color: 'primary',
+    gradient: 'from-primary-500 to-primary-600'
+  },
+  fiqh: {
+    name: 'Fiqh',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-glow">
+        <HiShieldCheck className="text-3xl" />
+      </div>
+    ),
+    color: 'primary',
+    gradient: 'from-primary-500 to-primary-600'
+  },
+  quran: {
+    name: 'Quran',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white shadow-glow">
+        <FaQuran className="text-3xl" />
+      </div>
+    ),
+    color: 'primary',
+    gradient: 'from-primary-400 to-primary-600'
+  },
+  aqeeda: {
+    name: 'Aqeeda',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white shadow-glow">
+        <FaPray className="text-3xl" />
+      </div>
+    ),
+    color: 'primary',
+    gradient: 'from-primary-400 to-primary-600'
+  },
 };
 
 const PathRoadmap = () => {
@@ -82,7 +118,7 @@ const PathRoadmap = () => {
             <HiArrowLeft /> Back to Paths
           </Link>
           <div className="flex items-center gap-4">
-            <div className="text-5xl">{path.icon}</div>
+            <div className="flex-shrink-0">{path.icon}</div>
             <div>
               <h1 className="text-3xl font-display font-bold text-dark-100">{pathData?.title || path.name} Path</h1>
               <p className="text-dark-400">Progress through levels to master {pathData?.title || path.name}</p>

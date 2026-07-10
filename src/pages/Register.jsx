@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { register as registerApi } from '../services/api';
 import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiUser } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import logo from '../assets/logo.png';
 
 const Register = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', language: 'en' });
@@ -42,7 +43,7 @@ const Register = () => {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-md">
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-xl bg-gradient-emerald flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-glow">S</div>
+            <img src={logo} alt="SiratAI Logo" className="w-16 h-16 object-contain mx-auto mb-4" />
             <h1 className="text-2xl font-display font-bold text-dark-100">Begin Your Journey</h1>
             <p className="text-dark-400 text-sm mt-1">Create your account and start learning Islam</p>
           </div>
