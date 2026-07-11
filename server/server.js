@@ -20,14 +20,15 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5173', 'https://sirathai.vercel.app'];
+  : ['http://localhost:5173', 'https://sirathai.vercel.app', 'https://sirath-ai.vercel.app'];
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, or Postman)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+    const isVercelDomain = /^https:\/\/sirath-?ai\.vercel\.app$/.test(origin);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:') || isVercelDomain) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));
