@@ -58,7 +58,9 @@ router.get('/:slug', protect, async (req, res) => {
     // Determine locked/unlocked status
     const enrichedLessons = lessonsWithProgress.map((lesson, index) => {
       let isUnlocked = false;
-      if (index === 0) {
+      if (req.user.role === 'mufti' || req.user.role === 'admin') {
+        isUnlocked = true; // Muftis and Admins have access to all lessons
+      } else if (index === 0) {
         isUnlocked = true; // First lesson always unlocked
       } else {
         const prevLesson = lessonsWithProgress[index - 1];

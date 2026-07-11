@@ -804,8 +804,8 @@ const PracticeStep = ({ data, onComplete, lessonInfo }) => {
           <div className="space-y-3">
             {terms.map(term => (
               <motion.button key={term} whileTap={{ scale: 0.95 }} onClick={() => handleTermClick(term)}
-                className={`w-full p-3 rounded-xl text-sm font-semibold transition-all ${matches[term] ? 'bg-primary-500/20 border-primary-500/50 text-primary-300' : selected === term ? 'bg-gold-500/20 border-gold-500/50 text-gold-300' : 'bg-dark-800 border-dark-600 text-dark-200 hover:border-dark-400'} border-2`}>
-                {matches[term] && <HiCheck className="inline mr-1" />}{term}
+                className={`w-full p-3 rounded-xl text-sm font-semibold transition-all ${matches[term] ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold' : selected === term ? 'bg-gold-500/20 border-gold-500/50 text-gold-300' : 'bg-dark-800 border-dark-600 text-dark-200 hover:border-dark-400'} border-2`}>
+                {matches[term] && <HiCheck className="inline mr-1 text-emerald-400" />}{term}
               </motion.button>
             ))}
           </div>
@@ -814,8 +814,8 @@ const PracticeStep = ({ data, onComplete, lessonInfo }) => {
               const used = Object.values(matches).includes(match);
               return (
                 <motion.button key={match} whileTap={{ scale: 0.95 }} onClick={() => handleMatchClick(match)} disabled={used}
-                  className={`w-full p-3 rounded-xl text-sm font-semibold transition-all ${used ? 'bg-primary-500/10 border-primary-500/30 text-primary-400 opacity-50' : 'bg-dark-800 border-dark-600 text-dark-200 hover:border-primary-400'} border-2`}>
-                  {match}
+                  className={`w-full p-3 rounded-xl text-sm font-semibold transition-all ${used ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold' : 'bg-dark-800 border-dark-600 text-dark-200 hover:border-emerald-500/50'} border-2`}>
+                  {used && <HiCheck className="inline mr-1 text-emerald-400" />}{match}
                 </motion.button>
               );
             })}

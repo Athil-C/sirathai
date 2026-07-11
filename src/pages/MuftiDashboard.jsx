@@ -27,6 +27,196 @@ const MuftiDashboard = () => {
   const [showLessonForm, setShowLessonForm] = useState(false);
   const scrollRef = useRef(null);
 
+  // --- Video Call states ---
+  const [stream, setStream] = useState(null);
+  const [screenStream, setScreenStream] = useState(null);
+  const [micActive, setMicActive] = useState(false);
+  const [webcamActive, setWebcamActive] = useState(false);
+  const [screenShareActive, setScreenShareActive] = useState(false);
+  const localVideoRef = useRef(null);
+  const screenVideoRef = useRef(null);
+
+  const [studentStates, setStudentStates] = useState([
+    { name: 'Abdullah', initial: 'A', micActive: true, cameraActive: false },
+    { name: 'Fatima', initial: 'F', micActive: false, cameraActive: false },
+    { name: 'Yusuf', initial: 'Y', micActive: false, cameraActive: false },
+    { name: 'Aisha', initial: 'A', micActive: false, cameraActive: false },
+  ]);
+
+  const [callMessages, setCallMessages] = useState([
+    { sender: 'Abdullah', text: 'Assalamu Alaikum Mufti, I have a question about the Salah postures.', time: '10:32 AM' },
+    { sender: 'Fatima', text: 'Is screen sharing visible?', time: '10:33 AM' }
+  ]);
+  const [callMsgInput, setCallMsgInput] = useState('');
+  const [showCallChat, setShowCallChat] = useState(false);
+
+  useEffect(() => {
+    if (localVideoRef.current) {
+      if (stream && webcamActive) {
+        localVideoRef.current.srcObject = stream;
+        localVideoRef.current.play().catch(e => console.warn("Video play error:", e));
+      } else {
+        localVideoRef.current.srcObject = null;
+      }
+    }
+  }, [stream, webcamActive]);
+
+  useEffect(() => {
+    if (screenVideoRef.current) {
+      if (screenStream && screenShareActive) {
+        screenVideoRef.current.srcObject = screenStream;
+        screenVideoRef.current.play().catch(e => console.warn("Screen video play error:", e));
+      } else {
+        screenVideoRef.current.srcObject = null;
+      }
+    }
+  }, [screenStream, screenShareActive]);
+
+  useEffect(() => {
+    if (tab !== 'videocall') {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        setStream(null);
+      }
+      if (screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+        setScreenStream(null);
+      }
+      setWebcamActive(false);
+      setMicActive(false);
+      setScreenShareActive(false);
+    }
+  }, [tab]);
+
+  useEffect(() => {
+    return () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+    };
+  }, [stream, screenStream]);
+
+  const toggleWebcam = async () => {
+    try {
+      if (webcamActive) {
+        if (stream) {
+          stream.getVideoTracks().forEach(track => {
+            track.stop();
+            stream.removeTrack(track);
+          });
+        }
+        setWebcamActive(false);
+        toast.success("Camera turned off");
+      } else {
+        const media = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480 },
+          audio: micActive
+        });
+        if (stream) {
+          stream.getTracks().forEach(t => t.stop());
+        }
+        setStream(media);
+        setWebcamActive(true);
+        toast.success("Camera turned on");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not access camera");
+    }
+  };
+
+  const toggleMic = async () => {
+    try {
+      if (micActive) {
+        if (stream) {
+          stream.getAudioTracks().forEach(track => {
+            track.stop();
+            stream.removeTrack(track);
+          });
+        }
+        setMicActive(false);
+        toast.success("Microphone muted");
+      } else {
+        const media = await navigator.mediaDevices.getUserMedia({
+          video: webcamActive,
+          audio: true
+        });
+        if (stream) {
+          stream.getTracks().forEach(t => t.stop());
+        }
+        setStream(media);
+        setMicActive(true);
+        toast.success("Microphone unmuted");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not access microphone");
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    try {
+      if (screenShareActive) {
+        if (screenStream) {
+          screenStream.getTracks().forEach(track => track.stop());
+        }
+        setScreenStream(null);
+        setScreenShareActive(false);
+        toast.success("Screen sharing stopped");
+      } else {
+        const media = await navigator.mediaDevices.getDisplayMedia({
+          video: true
+        });
+        media.getVideoTracks()[0].onended = () => {
+          setScreenStream(null);
+          setScreenShareActive(false);
+          toast.success("Screen sharing stopped");
+        };
+        setScreenStream(media);
+        setScreenShareActive(true);
+        toast.success("Screen sharing started");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not share screen");
+    }
+  };
+
+  const stopAllStreams = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach(track => track.stop());
+      setScreenStream(null);
+    }
+    setWebcamActive(false);
+    setMicActive(false);
+    setScreenShareActive(false);
+    toast.success("Video session ended");
+  };
+
+  const toggleStudentMic = (index) => {
+    setStudentStates(prev => prev.map((s, idx) => idx === index ? { ...s, micActive: !s.micActive } : s));
+    toast.success(`Toggled microphone for ${studentStates[index].name}`);
+  };
+
+  const toggleStudentCamera = (index) => {
+    setStudentStates(prev => prev.map((s, idx) => idx === index ? { ...s, cameraActive: !s.cameraActive } : s));
+    toast.success(`Toggled camera for ${studentStates[index].name}`);
+  };
+
+  const handleSendCallMsg = () => {
+    if (!callMsgInput.trim()) return;
+    const newMsg = {
+      sender: user?.name || 'Mufti (Host)',
+      text: callMsgInput.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setCallMessages(prev => [...prev, newMsg]);
+    setCallMsgInput('');
+  };
+
   useEffect(() => { fetchData(); }, [tab]);
 
   const fetchData = async () => {
@@ -275,48 +465,192 @@ const MuftiDashboard = () => {
             {/* ── VIDEO CALL (Demo UI) ── */}
             {tab === 'videocall' && (
               <div className="space-y-4">
-                <div className="glass-card p-6">
-                  <h2 className="text-lg font-bold text-dark-100 flex items-center gap-2 mb-4"><FaVideo className="text-primary-400" /> Group Video Session</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                    {/* Main video (Mufti) */}
-                    <div className="md:col-span-2 aspect-video bg-dark-900 rounded-2xl border-2 border-primary-500/30 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-dark-800/80 to-dark-900/80" />
-                      <div className="relative z-10 text-center">
-                        <div className="w-20 h-20 rounded-full bg-gradient-emerald mx-auto mb-3 flex items-center justify-center text-3xl text-white font-bold">{user?.name?.charAt(0)}</div>
-                        <p className="text-dark-100 font-semibold">{user?.name}</p>
-                        <span className="badge-success text-xs mt-1">Host</span>
-                      </div>
-                      <div className="absolute top-3 left-3 badge-success text-xs">🔴 LIVE</div>
-                    </div>
-                    {/* Student tiles */}
-                    {['Abdullah', 'Fatima', 'Yusuf', 'Aisha'].map((name, i) => (
-                      <div key={name} className="aspect-video bg-dark-900 rounded-xl border border-dark-700 flex items-center justify-center relative">
-                        <div className="text-center">
-                          <div className="w-12 h-12 rounded-full bg-dark-700 mx-auto mb-2 flex items-center justify-center text-lg text-dark-300 font-bold">{name[0]}</div>
-                          <p className="text-xs text-dark-300">{name}</p>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  <div className="lg:col-span-3 space-y-4">
+                    <div className="glass-card p-6">
+                      <h2 className="text-lg font-bold text-dark-100 flex items-center gap-2 mb-4"><FaVideo className="text-primary-400" /> Group Video Session</h2>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                        {/* Main video (Mufti) */}
+                        <div className="md:col-span-2 aspect-video bg-dark-900 rounded-2xl border-2 border-primary-500/30 flex items-center justify-center relative overflow-hidden">
+                          {webcamActive && stream ? (
+                            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]"></video>
+                          ) : screenShareActive && screenStream ? (
+                            <video ref={screenVideoRef} autoPlay playsInline muted className="w-full h-full object-contain"></video>
+                          ) : (
+                            <>
+                              <div className="absolute inset-0 bg-gradient-to-br from-dark-800/80 to-dark-900/80" />
+                              <div className="relative z-10 text-center">
+                                <div className="w-20 h-20 rounded-full bg-gradient-emerald mx-auto mb-3 flex items-center justify-center text-3xl text-white font-bold">{user?.name?.charAt(0)}</div>
+                                <p className="text-dark-100 font-semibold">{user?.name}</p>
+                                <span className="badge-success text-xs mt-1">Host</span>
+                              </div>
+                            </>
+                          )}
+                          <div className="absolute top-3 left-3 badge-success text-xs flex items-center gap-1.5 shadow-md">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            {screenShareActive ? "SCREEN SHARING" : webcamActive ? "LIVE (Camera)" : "LIVE"}
+                          </div>
+                          {!micActive && (
+                            <div className="absolute top-3 right-3 bg-red-500/90 text-white rounded-full px-2.5 py-1 text-xs flex items-center justify-center shadow-md font-bold">
+                              MUTED
+                            </div>
+                          )}
                         </div>
-                        {i === 0 && <div className="absolute top-2 right-2"><HiMicrophone className="text-primary-400 text-sm" /></div>}
+                        {/* Student tiles */}
+                        {studentStates.map((student, idx) => (
+                          <div key={student.name} className="aspect-video bg-dark-900 rounded-xl border border-dark-700 flex items-center justify-center relative overflow-hidden transition-all duration-300">
+                            {student.cameraActive ? (
+                              <div className="absolute inset-0 bg-gradient-to-tr from-primary-950/40 via-dark-900 to-primary-900/20 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-emerald-500/5 animate-pulse" />
+                                <div className="relative text-center">
+                                  <div className="w-12 h-12 rounded-full bg-primary-500/20 border border-primary-500/40 mx-auto mb-2 flex items-center justify-center text-lg text-primary-300 font-bold animate-pulse">
+                                    {student.initial}
+                                  </div>
+                                  <p className="text-[10px] text-emerald-400 tracking-wider font-semibold">CAM ACTIVE</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center">
+                                <div className="w-12 h-12 rounded-full bg-dark-700 mx-auto mb-2 flex items-center justify-center text-lg text-dark-300 font-bold">{student.initial}</div>
+                                <p className="text-xs text-dark-300">{student.name}</p>
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2 flex gap-1 z-20">
+                              <button 
+                                onClick={() => toggleStudentMic(idx)} 
+                                className={`p-1 rounded-md transition-all ${student.micActive ? 'bg-primary-500/20 text-primary-400' : 'bg-red-500/20 text-red-400'}`}
+                                title={student.micActive ? "Mute student" : "Unmute student"}
+                              >
+                                <HiMicrophone className="text-xs" />
+                              </button>
+                              <button 
+                                onClick={() => toggleStudentCamera(idx)} 
+                                className={`p-1 rounded-md transition-all ${student.cameraActive ? 'bg-primary-500/20 text-primary-400' : 'bg-red-500/20 text-red-400'}`}
+                                title={student.cameraActive ? "Turn off student camera" : "Turn on student camera"}
+                              >
+                                <HiVideoCamera className="text-xs" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  {/* Controls */}
-                  <div className="flex items-center justify-center gap-4">
-                    <button className="w-12 h-12 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center text-dark-200 transition-all"><HiMicrophone className="text-lg" /></button>
-                    <button className="w-12 h-12 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center text-dark-200 transition-all"><HiVideoCamera className="text-lg" /></button>
-                    <button className="w-12 h-12 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center text-dark-200 transition-all"><HiDesktopComputer className="text-lg" /></button>
-                    <button className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-all shadow-lg"><HiX className="text-xl" /></button>
-                    <button className="w-12 h-12 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center text-dark-200 transition-all"><HiUsers className="text-lg" /></button>
-                    <button className="w-12 h-12 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center text-dark-200 transition-all"><HiChat className="text-lg" /></button>
-                  </div>
-                </div>
-                {/* Attendance */}
-                <div className="glass-card p-5">
-                  <h3 className="font-bold text-dark-100 text-sm mb-3 flex items-center gap-2"><HiUsers className="text-primary-400" /> Attendance (4/4 present)</h3>
-                  <div className="space-y-2">{['Abdullah', 'Fatima', 'Yusuf', 'Aisha'].map(n => (
-                    <div key={n} className="flex items-center gap-3 p-2 bg-dark-800/40 rounded-lg">
-                      <div className="w-2 h-2 bg-primary-500 rounded-full" /><span className="text-sm text-dark-200">{n}</span><span className="ml-auto badge-success text-xs">Present</span>
+                      {/* Controls */}
+                      <div className="flex items-center justify-center gap-4">
+                        <button 
+                          onClick={toggleMic} 
+                          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                            micActive 
+                              ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-glow-sm' 
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                          }`}
+                          title={micActive ? "Mute Microphone" : "Unmute Microphone"}
+                        >
+                          <HiMicrophone className="text-lg" />
+                        </button>
+                        <button 
+                          onClick={toggleWebcam} 
+                          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                            webcamActive 
+                              ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-glow-sm' 
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                          }`}
+                          title={webcamActive ? "Turn Off Camera" : "Turn On Camera"}
+                        >
+                          <HiVideoCamera className="text-lg" />
+                        </button>
+                        <button 
+                          onClick={toggleScreenShare} 
+                          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                            screenShareActive 
+                              ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-glow-sm' 
+                              : 'bg-dark-700 text-dark-200 hover:bg-dark-600'
+                          }`}
+                          title={screenShareActive ? "Stop Sharing Screen" : "Share Screen"}
+                        >
+                          <HiDesktopComputer className="text-lg" />
+                        </button>
+                        <button 
+                          onClick={stopAllStreams} 
+                          className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-all shadow-lg hover:scale-105"
+                          title="End Session"
+                        >
+                          <HiX className="text-xl" />
+                        </button>
+                        <button 
+                          onClick={() => toast.success("Attendance and user list is visible below")} 
+                          className="w-12 h-12 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center text-dark-200 transition-all"
+                          title="Users List"
+                        >
+                          <HiUsers className="text-lg" />
+                        </button>
+                        <button 
+                          onClick={() => setShowCallChat(!showCallChat)} 
+                          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                            showCallChat 
+                              ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-glow-sm' 
+                              : 'bg-dark-700 text-dark-200 hover:bg-dark-600'
+                          }`}
+                          title="Toggle Live Chat"
+                        >
+                          <HiChat className="text-lg" />
+                        </button>
+                      </div>
                     </div>
-                  ))}</div>
+                    {/* Attendance */}
+                    <div className="glass-card p-5">
+                      <h3 className="font-bold text-dark-100 text-sm mb-3 flex items-center gap-2"><HiUsers className="text-primary-400" /> Attendance (4/4 present)</h3>
+                      <div className="space-y-2">
+                        {studentStates.map(student => (
+                          <div key={student.name} className="flex items-center gap-3 p-2 bg-dark-800/40 rounded-lg text-left">
+                            <div className={`w-2 h-2 rounded-full ${student.micActive || student.cameraActive ? 'bg-primary-500 animate-pulse' : 'bg-dark-500'}`} />
+                            <span className="text-sm text-dark-200 font-semibold">{student.name}</span>
+                            <div className="ml-auto flex items-center gap-2">
+                              {student.micActive && <span className="badge-success text-[8px] !px-1.5 !py-0.5">Audio On</span>}
+                              {student.cameraActive && <span className="badge-success text-[8px] !px-1.5 !py-0.5">Video On</span>}
+                              <span className="badge-success text-xs">Present</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chat sidebar panel */}
+                  {showCallChat && (
+                    <div className="glass-card flex flex-col h-full min-h-[500px] border border-dark-700 shadow-lg">
+                      <div className="p-4 border-b border-dark-700 flex justify-between items-center bg-dark-900/10">
+                        <h3 className="font-bold text-dark-100 text-sm flex items-center gap-2">
+                          <HiChat className="text-primary-400" /> Live Session Chat
+                        </h3>
+                        <button onClick={() => setShowCallChat(false)} className="text-dark-400 hover:text-dark-200 text-xs">✕</button>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[400px]">
+                        {callMessages.map((msg, idx) => (
+                          <div key={idx} className="text-left bg-dark-900/40 p-2.5 rounded-xl border border-dark-700/30">
+                            <div className="flex justify-between items-baseline mb-1">
+                              <span className="text-xs font-bold text-primary-400">{msg.sender}</span>
+                              <span className="text-[10px] text-dark-500 font-mono">{msg.time}</span>
+                            </div>
+                            <p className="text-xs text-dark-200 leading-relaxed">{msg.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="p-3 border-t border-dark-700 flex gap-2 bg-dark-900/10">
+                        <input
+                          value={callMsgInput}
+                          onChange={e => setCallMsgInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleSendCallMsg()}
+                          placeholder="Send message to group..."
+                          className="input-field !py-2 !px-3 text-xs flex-1"
+                        />
+                        <button onClick={handleSendCallMsg} className="w-8 h-8 rounded-lg bg-gradient-emerald flex items-center justify-center text-white hover:scale-105 transition-transform">
+                          <HiPaperAirplane className="rotate-90 text-sm" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -27,6 +27,87 @@ const paths = [
   { title: 'Aqeeda', slug: 'aqeeda', description: 'Islamic creed & belief — Tawheed, Allah\'s Names, Prophets, Angels, Hereafter', icon: '🟣', color: '#8b5cf6', gradient: 'from-purple-500 to-purple-600', order: 4, difficulty: 'beginner', topics: ['Tawheed', 'Allah\'s Names', 'Prophets', 'Angels', 'Divine Books', 'Hereafter'] },
 ];
 
+const categoryPairs = {
+  aqeeda: [
+    [
+      { term: 'Allah', match: 'The Creator of the universe' },
+      { term: 'Tawheed', match: 'Belief that Allah is One' },
+      { term: 'Shirk', match: 'Associating partners with Allah' }
+    ],
+    [
+      { term: 'Jannah', match: 'The Arabic name for Paradise' },
+      { term: 'Jahannam', match: 'The Arabic name for Hell' },
+      { term: 'Barzakh', match: 'The barrier between death and resurrection' }
+    ],
+    [
+      { term: 'Jibreel', match: 'The angel who brought the Qur\'an to Prophet Muhammad ﷺ' },
+      { term: 'Israfil', match: 'The angel who will blow the Trumpet' },
+      { term: 'Mikail', match: 'The angel of rain and sustenance' }
+    ],
+    [
+      { term: 'Adam عليه السلام', match: 'The first human and the first Prophet' },
+      { term: 'Muhammad ﷺ', match: 'The last and final Prophet of Islam' },
+      { term: 'Nuh عليه السلام', match: 'The Prophet who built the Ark' }
+    ]
+  ],
+  fiqh: [
+    [
+      { term: 'Wudu', match: 'Ritual purification before prayer' },
+      { term: 'Ghusl', match: 'Full-body ritual purification' },
+      { term: 'Tayammum', match: 'Dry purification using clean earth or sand' }
+    ],
+    [
+      { term: 'Fajr', match: 'The first obligatory prayer of the day (at dawn)' },
+      { term: 'Maghrib', match: 'The sunset obligatory prayer' },
+      { term: 'Isha', match: 'The night obligatory prayer' }
+    ],
+    [
+      { term: 'Ruku\'', match: 'The bowing position in Salah' },
+      { term: 'Sujood', match: 'The prostration position in Salah' },
+      { term: 'Qiyam', match: 'The standing position in Salah' }
+    ],
+    [
+      { term: 'Hajj', match: 'The major pilgrimage to Makkah' },
+      { term: 'Umrah', match: 'The minor pilgrimage performed at any time' },
+      { term: 'Qiblah', match: 'The direction of the Ka\'bah faced during Salah' }
+    ]
+  ],
+  quran: [
+    [
+      { term: 'Surah', match: 'A chapter of the Holy Qur\'an' },
+      { term: 'Ayah', match: 'A verse of the Holy Qur\'an' },
+      { term: 'Mushaf', match: 'The physical written copy of the Qur\'an' }
+    ],
+    [
+      { term: 'Al-Fatihah', match: 'The first Surah of the Qur\'an ("The Opening")' },
+      { term: 'Al-Baqarah', match: 'The longest Surah in the Qur\'an' },
+      { term: 'Al-Kawthar', match: 'The shortest Surah in the Qur\'an' }
+    ],
+    [
+      { term: 'Al-Ikhlas', match: 'The Surah that teaches the pure Oneness of Allah' },
+      { term: 'An-Nas', match: 'The last and final Surah in the Qur\'an' },
+      { term: 'Yasin', match: 'Often referred to as the heart of the Qur\'an' }
+    ]
+  ],
+  thareeq: [
+    [
+      { term: 'Bismillah', match: 'What a Muslim says before eating' },
+      { term: 'Alhamdulillah', match: 'What a Muslim says after eating' },
+      { term: 'Astaghfirullah', match: 'What a Muslim says to ask Allah for forgiveness' }
+    ],
+    [
+      { term: 'As-salamu Alaikum', match: 'The Islamic greeting ("Peace be upon you")' },
+      { term: 'Wa Alaikumus-Salam', match: 'The reply to the Islamic greeting' },
+      { term: 'In shaa Allah', match: 'What a Muslim says when planning future actions' }
+    ],
+    [
+      { term: 'JazakAllahu Khayran', match: 'Du\'a meaning "May Allah reward you with goodness"' },
+      { term: 'Truthfulness', match: 'The quality the Prophet ﷺ was most known for' },
+      { term: 'Helping Neighbours', match: 'A highly encouraged action in Islamic manners' }
+    ]
+  ]
+};
+
 function makeLessons(pathId, slug) {
   const bank = {
     thareeq: [
@@ -85,64 +166,64 @@ function makeLessons(pathId, slug) {
 
   const practiceTypes = ['matching', 'flashcards', 'ordering'];
 
-  return (bank[slug] || []).map((l, i) => ({
-    title: l.title,
-    description: l.desc,
-    path: pathId,
-    pathSlug: slug,
-    order: i + 1,
-    type: l.type,
-    nodeType: l.nodeType || 'lesson',
-    xpReward: l.nodeType === 'milestone' ? 50 : 25,
-    coinReward: l.nodeType === 'milestone' ? 15 : 5,
-    learnContent: {
-      sections: [
-        { heading: `Understanding ${l.title}`, body: `This lesson covers the fundamentals of ${l.title}. ${l.desc}. Islam is a complete way of life that provides guidance for every aspect of human existence.`, icon: '📖' },
-        { heading: 'Key Concepts', body: `In this section, we explore the important concepts related to ${l.title}. Each concept builds upon the previous one, creating a solid foundation of knowledge.`, icon: '💡' },
-        { heading: 'Practical Application', body: `Now let us understand how ${l.title} applies to your daily life as a Muslim. These teachings are meant to be lived, not just learned.`, icon: '✨' },
-      ],
-    },
-    observeContent: {
-      title: `Observing ${l.title}`,
-      description: `Visual walkthrough of ${l.title} concepts and practices.`,
-      steps: [
-        { stepNumber: 1, title: 'Step 1: Foundation', description: `Begin with the basics of ${l.title}`, icon: '1️⃣' },
-        { stepNumber: 2, title: 'Step 2: Understanding', description: 'Deepen your comprehension', icon: '2️⃣' },
-        { stepNumber: 3, title: 'Step 3: Connection', description: 'See how it connects to daily life', icon: '3️⃣' },
-        { stepNumber: 4, title: 'Step 4: Reflection', description: 'Reflect on what you have learned', icon: '4️⃣' },
-      ],
-    },
-    practiceContent: {
-      type: l.title === 'Introduction to Islam' ? 'matching' : practiceTypes[i % 3],
-      instruction: `Practice what you learned about ${l.title}:`,
-      pairs: l.title === 'Introduction to Islam' ? [
-        { term: 'What is Islam?', match: 'Islam means "submission to the will of Allah." It is a monotheistic religion that teaches belief in one God (Allah), His angels, His revealed books, His messengers, the Day of Judgment, and divine decree.' },
-        { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Prophet Muhammad (ﷺ) is the final messenger of Allah. He was sent to guide humanity with the message of Islam and the Qur\'an, serving as the perfect example for Muslims.' },
-        { term: 'What are the Five Pillars of Islam?', match: 'The Five Pillars of Islam are: Shahadah (Faith), Salah (Prayer), Zakah (Charity), Sawm (Fasting during Ramadan), and Hajj (Pilgrimage to Makkah). These pillars form the foundation of a Muslim\'s faith and practice.' }
-      ] : [
-        { term: 'Concept 1', match: 'Definition 1' },
-        { term: 'Concept 2', match: 'Definition 2' },
-        { term: 'Concept 3', match: 'Definition 3' },
-      ],
-      cards: [
-        { front: 'بسم الله', back: 'In the name of Allah' },
-        { front: 'الحمد لله', back: 'All praise is due to Allah' },
-        { front: 'الله أكبر', back: 'Allah is the Greatest' },
-        { front: 'سبحان الله', back: 'Glory be to Allah' },
-      ],
-      words: ['First', 'Second', 'Third', 'Fourth', 'Fifth'],
-    },
-    quiz: quizBank.map(q => ({ ...q })),
-    passScore: 70,
-    masteryChallenge: {
-      enabled: l.nodeType === 'milestone',
-      timeLimit: 180,
-      questions: [
-        { question: `Master question for ${l.title}`, type: 'multiple_choice', options: ['A', 'B', 'C', 'D'], correctAnswer: 'A' },
-      ],
-    },
-    isActive: true,
-  }));
+  return (bank[slug] || []).map((l, i) => {
+    const pairsList = categoryPairs[slug] || [];
+    const selectedPairs = pairsList[i % pairsList.length] || [
+      { term: 'Concept 1', match: 'Definition 1' },
+      { term: 'Concept 2', match: 'Definition 2' },
+      { term: 'Concept 3', match: 'Definition 3' }
+    ];
+    return {
+      title: l.title,
+      description: l.desc,
+      path: pathId,
+      pathSlug: slug,
+      order: i + 1,
+      type: l.type,
+      nodeType: l.nodeType || 'lesson',
+      xpReward: l.nodeType === 'milestone' ? 50 : 25,
+      coinReward: l.nodeType === 'milestone' ? 15 : 5,
+      learnContent: {
+        sections: [
+          { heading: `Understanding ${l.title}`, body: `This lesson covers the fundamentals of ${l.title}. ${l.desc}. Islam is a complete way of life that provides guidance for every aspect of human existence.`, icon: '📖' },
+          { heading: 'Key Concepts', body: `In this section, we explore the important concepts related to ${l.title}. Each concept builds upon the previous one, creating a solid foundation of knowledge.`, icon: '💡' },
+          { heading: 'Practical Application', body: `Now let us understand how ${l.title} applies to your daily life as a Muslim. These teachings are meant to be lived, not just learned.`, icon: '✨' },
+        ],
+      },
+      observeContent: {
+        title: `Observing ${l.title}`,
+        description: `Visual walkthrough of ${l.title} concepts and practices.`,
+        steps: [
+          { stepNumber: 1, title: 'Step 1: Foundation', description: `Begin with the basics of ${l.title}`, icon: '1️⃣' },
+          { stepNumber: 2, title: 'Step 2: Understanding', description: 'Deepen your comprehension', icon: '2️⃣' },
+          { stepNumber: 3, title: 'Step 3: Connection', description: 'See how it connects to daily life', icon: '3️⃣' },
+          { stepNumber: 4, title: 'Step 4: Reflection', description: 'Reflect on what you have learned', icon: '4️⃣' },
+        ],
+      },
+      practiceContent: {
+        type: l.title === 'Introduction to Islam' ? 'matching' : practiceTypes[i % 3],
+        instruction: `Practice what you learned about ${l.title}:`,
+        pairs: selectedPairs,
+        cards: [
+          { front: 'بسم الله', back: 'In the name of Allah' },
+          { front: 'الحمد لله', back: 'All praise is due to Allah' },
+          { front: 'الله أكبر', back: 'Allah is the Greatest' },
+          { front: 'سبحان الله', back: 'Glory be to Allah' },
+        ],
+        words: ['First', 'Second', 'Third', 'Fourth', 'Fifth'],
+      },
+      quiz: quizBank.map(q => ({ ...q })),
+      passScore: 70,
+      masteryChallenge: {
+        enabled: l.nodeType === 'milestone',
+        timeLimit: 180,
+        questions: [
+          { question: `Master question for ${l.title}`, type: 'multiple_choice', options: ['A', 'B', 'C', 'D'], correctAnswer: 'A' },
+        ],
+      },
+      isActive: true,
+    };
+  });
 }
 
 const achievements = [
