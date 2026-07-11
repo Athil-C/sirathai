@@ -19,6 +19,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import Inbox from './pages/Inbox';
 import ReportMufti from './pages/ReportMufti';
+import Certificates from './pages/Certificates';
+
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60 * 1000 } },
@@ -70,6 +72,7 @@ function AppRoutes() {
         <Route path="/leaderboard" element={<ProtectedRoute><OnboardingGuard><Leaderboard /></OnboardingGuard></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><OnboardingGuard><Profile /></OnboardingGuard></ProtectedRoute>} />
         <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
+        <Route path="/certificates" element={<ProtectedRoute><OnboardingGuard><Certificates /></OnboardingGuard></ProtectedRoute>} />
         <Route path="/report-mufti" element={<ProtectedRoute><OnboardingGuard><ReportMufti /></OnboardingGuard></ProtectedRoute>} />
 
         {/* Mufti */}

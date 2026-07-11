@@ -42,6 +42,7 @@ const Navbar = () => {
       { to: '/paths', label: t.learn, icon: <HiAcademicCap /> },
       { to: '/community', label: t.community, icon: <HiUserGroup /> },
       { to: '/leaderboard', label: t.leaderboard, icon: <HiChartBar /> },
+      { to: '/certificates', label: t.certificates, icon: <HiAcademicCap /> },
       { to: '/inbox', label: 'Inbox', icon: <HiMail /> },
     ];
   };
@@ -132,6 +133,9 @@ const Navbar = () => {
                         </Link>
                         {user.role === 'student' && (
                           <>
+                            <Link to="/certificates" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-dark-300 hover:text-primary-500 hover:bg-dark-900/50 transition-all">
+                              <HiAcademicCap /> {t.certificates}
+                            </Link>
                             <Link to="/inbox" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-dark-300 hover:text-primary-500 hover:bg-dark-900/50 transition-all">
                               💬 {t.inbox}
                             </Link>
