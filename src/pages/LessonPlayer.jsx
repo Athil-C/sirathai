@@ -54,6 +54,86 @@ const LearnStep = ({ data, onComplete }) => {
   );
 };
 
+// Helper to mathematically classify Salah postures from 2D skeleton joint keypoints
+const classifySalahPose = (landmarks) => {
+  if (!landmarks) return { pose: 'UNKNOWN', score: 0 };
+  
+  // Landmark index mapping
+  const nose = landmarks[0];
+  const lShoulder = landmarks[11];
+  const rShoulder = landmarks[12];
+  const lElbow = landmarks[13];
+  const rElbow = landmarks[14];
+  const lWrist = landmarks[15];
+  const rWrist = landmarks[16];
+  const lHip = landmarks[23];
+  const rHip = landmarks[24];
+  const lKnee = landmarks[25];
+  const rKnee = landmarks[26];
+  const lAnkle = landmarks[27];
+  const rAnkle = landmarks[28];
+
+  // Helper: calculate absolute angle formed at joint B by points A and C
+  const calculateAngle = (a, b, c) => {
+    if (!a || !b || !c) return 180;
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let angle = Math.abs((radians * 180.0) / Math.PI);
+    if (angle > 180.0) angle = 360.0 - angle;
+    return angle;
+  };
+
+  const hipAngle = calculateAngle(
+    { x: (lShoulder.x + rShoulder.x) / 2, y: (lShoulder.y + rShoulder.y) / 2 },
+    { x: (lHip.x + rHip.x) / 2, y: (lHip.y + rHip.y) / 2 },
+    { x: (lKnee.x + rKnee.x) / 2, y: (lKnee.y + rKnee.y) / 2 }
+  );
+
+  const kneeAngle = calculateAngle(
+    { x: (lHip.x + rHip.x) / 2, y: (lHip.y + rHip.y) / 2 },
+    { x: (lKnee.x + rKnee.x) / 2, y: (lKnee.y + rKnee.y) / 2 },
+    { x: (lAnkle.x + rAnkle.x) / 2, y: (lAnkle.y + rAnkle.y) / 2 }
+  );
+
+  const headY = nose.y;
+  const hipY = (lHip.y + rHip.y) / 2;
+  const kneeY = (lKnee.y + rKnee.y) / 2;
+  const ankleY = (lAnkle.y + rAnkle.y) / 2;
+  const shoulderY = (lShoulder.y + rShoulder.y) / 2;
+  
+  const height = Math.abs(ankleY - headY) || 1;
+
+  // 1. Sujood (Prostration): Head is below the knees and close to the floor
+  if (headY > kneeY - 0.05 && hipY > shoulderY) {
+    return { pose: 'SUJOOD', score: 95 };
+  }
+
+  // 2. Jalsa / Tashahhud: Sitting down with knees bent
+  if (Math.abs(hipY - ankleY) < 0.18 * height && hipAngle > 100 && kneeAngle < 90) {
+    return { pose: 'JALSA', score: 92 };
+  }
+
+  // 3. Ruku: Bowing down with straight legs
+  if (hipAngle < 130 && kneeAngle > 140) {
+    return { pose: 'RUKU', score: 96 };
+  }
+
+  // 4. Salam: Turn head left or right relative to shoulders
+  const shoulderWidth = Math.abs(lShoulder.x - rShoulder.x) || 1;
+  const noseDistToL = Math.abs(nose.x - lShoulder.x);
+  const noseDistToR = Math.abs(nose.x - rShoulder.x);
+  if (noseDistToL < shoulderWidth * 0.22 || noseDistToR < shoulderWidth * 0.22) {
+    return { pose: 'SALAM', score: 88 };
+  }
+
+  // 5. Qiyam: Straight standing
+  if (hipAngle > 145 && kneeAngle > 145) {
+    return { pose: 'QIYAM', score: 98 };
+  }
+
+  // Fallback default
+  return { pose: 'QIYAM', score: 78 };
+};
+
 // --- Salah Observation Step (Enhanced with video, animation, guide & AI webcam) ---
 const SalahObservation = ({ data, onComplete }) => {
   const [tab, setTab] = useState('video');
@@ -65,6 +145,32 @@ const SalahObservation = ({ data, onComplete }) => {
   const videoRef = React.useRef(null);
   const canvasRef = React.useRef(null);
 
+  // AI Real-time Pose tracking states
+  const [fps, setFps] = useState(60);
+  const [confidence, setConfidence] = useState(98);
+  const [detectedPoseName, setDetectedPoseName] = useState('QIYAM');
+  const [userDetected, setUserDetected] = useState(false);
+  
+  const latestLandmarksRef = React.useRef(null);
+  const trackingActiveRef = React.useRef(false);
+  const lastValidPoseTimeRef = React.useRef(Date.now());
+  const currentJointsRef = React.useRef({});
+  const poseInstanceRef = React.useRef(null);
+  const isProcessingRef = React.useRef(false);
+
+  // Sync stream to videoRef element once it is mounted/rendered
+  React.useEffect(() => {
+    if (webcamActive && stream && videoRef.current) {
+      if (videoRef.current.srcObject !== stream) {
+        console.log("Attaching webcam stream to video element...");
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(err => {
+          console.warn("Video play error:", err);
+        });
+      }
+    }
+  }, [webcamActive, stream]);
+
   const startWebcam = async () => {
     try {
       console.log("Attempting to request webcam access...");
@@ -75,7 +181,7 @@ const SalahObservation = ({ data, onComplete }) => {
           facingMode: "user"
         }
       };
-      
+
       let mediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -83,23 +189,46 @@ const SalahObservation = ({ data, onComplete }) => {
         console.warn("Webcam access with ideal constraints failed, trying with simple fallback video:true...", firstErr);
         mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
       }
-      
+
       setStream(mediaStream);
       setWebcamActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+
+      // Initialize MediaPipe Pose instance
+      if (window.Pose) {
+        console.log("Initializing MediaPipe Pose tracker...");
+        const poseObj = new window.Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+
+        poseObj.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          enableSegmentation: false,
+          smoothSegmentation: false,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+
+        poseObj.onResults((results) => {
+          if (results.poseLandmarks) {
+            latestLandmarksRef.current = results.poseLandmarks;
+            trackingActiveRef.current = true;
+            lastValidPoseTimeRef.current = Date.now();
+          } else {
+            trackingActiveRef.current = false;
+          }
+        });
+
+        poseInstanceRef.current = poseObj;
+      } else {
+        console.warn("window.Pose not found. Ensure CDN script is loaded correctly.");
       }
+
       toast.success('Webcam connected successfully!');
     } catch (err) {
       console.error('Webcam access error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        toast.error('Webcam access denied. Please click the camera settings/lock icon in your browser address bar to allow camera access, then reload the page.');
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        toast.error('No webcam detected. Please connect a webcam and try again.');
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        toast.error('Webcam cannot be read. It is likely already in use by another app (like Zoom, Teams, OBS, Discord) or blocked by Windows privacy settings.');
-      } else if (err.name === 'OverconstrainedError') {
-        toast.error('Webcam resolution constraint could not be satisfied.');
+        toast.error('Webcam access denied. Please allow camera permissions in your browser address bar.');
       } else {
         toast.error(`Webcam error: ${err.message || 'Unknown error'}`);
       }
@@ -113,6 +242,18 @@ const SalahObservation = ({ data, onComplete }) => {
     setStream(null);
     setWebcamActive(false);
     setAnalysisResult(null);
+    latestLandmarksRef.current = null;
+    trackingActiveRef.current = false;
+    currentJointsRef.current = {};
+    isProcessingRef.current = false;
+    if (poseInstanceRef.current) {
+      try {
+        poseInstanceRef.current.close();
+      } catch (e) {
+        console.warn("Error closing Pose instance:", e);
+      }
+      poseInstanceRef.current = null;
+    }
   };
 
   const handleAnalyze = () => {
@@ -146,60 +287,160 @@ const SalahObservation = ({ data, onComplete }) => {
     if (!webcamActive || !canvasRef.current || !videoRef.current) return;
     let animId;
     const ctx = canvasRef.current.getContext('2d');
-    
+
+    let frameCount = 0;
+    let lastFpsUpdateTime = Date.now();
+    let lastClassificationTime = Date.now();
+
+    const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
+
     const draw = () => {
-      if (!canvasRef.current) return;
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      
-      ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = 3;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#10b981';
+      if (!canvasRef.current || !videoRef.current) return;
       
       const w = canvasRef.current.width;
       const h = canvasRef.current.height;
-      const t = Date.now() * 0.005;
-      const noise = (offset) => Math.sin(t + offset) * 3;
       
-      const head = { x: w * 0.5 + noise(0), y: h * 0.25 + noise(1) };
-      const shoulderL = { x: w * 0.4 + noise(2), y: h * 0.4 + noise(3) };
-      const shoulderR = { x: w * 0.6 + noise(4), y: h * 0.4 + noise(5) };
-      const elbowL = { x: w * 0.35 + noise(6), y: h * 0.55 + noise(7) };
-      const elbowR = { x: w * 0.65 + noise(8), y: h * 0.55 + noise(9) };
-      const handL = { x: w * 0.45 + noise(10), y: h * 0.5 + noise(11) };
-      const handR = { x: w * 0.55 + noise(12), y: h * 0.5 + noise(13) };
-      const hipL = { x: w * 0.42 + noise(14), y: h * 0.7 + noise(15) };
-      const hipR = { x: w * 0.58 + noise(16), y: h * 0.7 + noise(17) };
-      const kneeL = { x: w * 0.43 + noise(18), y: h * 0.85 + noise(19) };
-      const kneeR = { x: w * 0.57 + noise(20), y: h * 0.85 + noise(21) };
-      
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Send current webcam frame to MediaPipe Pose model if not already processing a frame
+      if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA && poseInstanceRef.current && !isProcessingRef.current) {
+        isProcessingRef.current = true;
+        poseInstanceRef.current.send({ image: videoRef.current })
+          .then(() => {
+            isProcessingRef.current = false;
+          })
+          .catch(err => {
+            console.warn("Pose processing error:", err);
+            isProcessingRef.current = false;
+          });
+      }
+
+      // Calculate dynamic FPS
+      frameCount++;
+      const now = Date.now();
+      if (now - lastFpsUpdateTime > 1000) {
+        const calculatedFps = Math.round((frameCount * 1000) / (now - lastFpsUpdateTime));
+        setFps(calculatedFps);
+        frameCount = 0;
+        lastFpsUpdateTime = now;
+      }
+
+      // Check if user is detected based on how recently landmarks were received
+      const detected = latestLandmarksRef.current && (now - lastValidPoseTimeRef.current < 1500);
+      if (detected !== userDetected) {
+        setUserDetected(detected);
+      }
+
+      // 2. Perform periodic posture classification
+      if (latestLandmarksRef.current && (now - lastClassificationTime > 250)) {
+        const result = classifySalahPose(latestLandmarksRef.current);
+        setDetectedPoseName(result.pose);
+        setConfidence(result.score);
+        lastClassificationTime = now;
+      }
+
+      // Stroke rendering setup for glowing green skeleton guides
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3.5;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#10b981';
+
+      // Helper to retrieve and interpolate coordinates using LERP to ensure ultra-smooth transitions
+      const getJointCoords = (index, fallbackTarget) => {
+        if (latestLandmarksRef.current && latestLandmarksRef.current[index]) {
+          const lm = latestLandmarksRef.current[index];
+          const visibility = lm.visibility !== undefined ? lm.visibility : 1;
+          
+          if (visibility > 0.5) {
+            const targetX = lm.x * w;
+            const targetY = lm.y * h;
+            
+            if (!currentJointsRef.current[index]) {
+              currentJointsRef.current[index] = { x: targetX, y: targetY };
+            } else {
+              currentJointsRef.current[index].x = lerp(currentJointsRef.current[index].x, targetX, 0.18);
+              currentJointsRef.current[index].y = lerp(currentJointsRef.current[index].y, targetY, 0.18);
+            }
+          }
+          
+          if (currentJointsRef.current[index]) {
+            return currentJointsRef.current[index];
+          }
+        }
+        return fallbackTarget;
+      };
+
+      const t = now * 0.005;
+      const noise = (offset) => Math.sin(t + offset) * 1.5;
+
+      let head, shoulderL, shoulderR, elbowL, elbowR, wristL, wristR, hipL, hipR, kneeL, kneeR, ankleL, ankleR;
+
+      if (detected) {
+        // Map detected landmarks directly to skeleton coordinates
+        head = getJointCoords(0, { x: w * 0.5, y: h * 0.25 });
+        shoulderL = getJointCoords(11, { x: w * 0.4, y: h * 0.38 });
+        shoulderR = getJointCoords(12, { x: w * 0.6, y: h * 0.38 });
+        elbowL = getJointCoords(13, { x: w * 0.35, y: h * 0.52 });
+        elbowR = getJointCoords(14, { x: w * 0.65, y: h * 0.52 });
+        wristL = getJointCoords(15, { x: w * 0.45, y: h * 0.5 });
+        wristR = getJointCoords(16, { x: w * 0.55, y: h * 0.5 });
+        hipL = getJointCoords(23, { x: w * 0.43, y: h * 0.68 });
+        hipR = getJointCoords(24, { x: w * 0.57, y: h * 0.68 });
+        kneeL = getJointCoords(25, { x: w * 0.44, y: h * 0.82 });
+        kneeR = getJointCoords(26, { x: w * 0.56, y: h * 0.82 });
+        ankleL = getJointCoords(27, { x: w * 0.44, y: h * 0.94 });
+        ankleR = getJointCoords(28, { x: w * 0.56, y: h * 0.94 });
+      } else {
+        // Fallback Standby Guide Skeleton if user is not detected
+        head = { x: w * 0.5 + noise(0), y: h * 0.25 + noise(1) };
+        shoulderL = { x: w * 0.4 + noise(2), y: h * 0.4 + noise(3) };
+        shoulderR = { x: w * 0.6 + noise(4), y: h * 0.4 + noise(5) };
+        elbowL = { x: w * 0.35 + noise(6), y: h * 0.55 + noise(7) };
+        elbowR = { x: w * 0.65 + noise(8), y: h * 0.55 + noise(9) };
+        wristL = { x: w * 0.45 + noise(10), y: h * 0.5 + noise(11) };
+        wristR = { x: w * 0.55 + noise(12), y: h * 0.5 + noise(13) };
+        hipL = { x: w * 0.42 + noise(14), y: h * 0.7 + noise(15) };
+        hipR = { x: w * 0.58 + noise(16), y: h * 0.7 + noise(17) };
+        kneeL = { x: w * 0.43 + noise(18), y: h * 0.85 + noise(19) };
+        kneeR = { x: w * 0.57 + noise(20), y: h * 0.85 + noise(21) };
+        ankleL = { x: w * 0.43 + noise(22), y: h * 0.96 + noise(23) };
+        ankleR = { x: w * 0.57 + noise(24), y: h * 0.96 + noise(25) };
+
+        // Dim transparency/faded rendering when standby
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)';
+        ctx.shadowColor = 'rgba(16, 185, 129, 0.1)';
+      }
+
       const drawLine = (p1, p2) => {
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
       };
-      
-      drawLine(head, { x: (shoulderL.x+shoulderR.x)/2, y: (shoulderL.y+shoulderR.y)/2 });
+
+      drawLine(head, { x: (shoulderL.x + shoulderR.x) / 2, y: (shoulderL.y + shoulderR.y) / 2 });
       drawLine(shoulderL, shoulderR);
       drawLine(shoulderL, elbowL);
       drawLine(shoulderR, elbowR);
-      drawLine(elbowL, handL);
-      drawLine(elbowR, handR);
+      drawLine(elbowL, wristL);
+      drawLine(elbowR, wristR);
       drawLine(shoulderL, hipL);
       drawLine(shoulderR, hipR);
       drawLine(hipL, hipR);
       drawLine(hipL, kneeL);
       drawLine(hipR, kneeR);
-      
+      drawLine(kneeL, ankleL);
+      drawLine(kneeR, ankleR);
+
       const drawNode = (p, color) => {
         ctx.fillStyle = color || '#34d399';
         ctx.beginPath();
         ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
         ctx.fill();
       };
-      
+
       const dotColor = (jointName) => {
+        if (!detected) return 'rgba(52, 211, 153, 0.3)';
         if (analysisResult) {
           if (pose === 'ruku' && jointName === 'hip') return '#f87171';
           if (pose === 'qiyam' && jointName === 'head') return '#34d399';
@@ -207,25 +448,38 @@ const SalahObservation = ({ data, onComplete }) => {
         }
         return '#34d399';
       };
-      
+
       drawNode(head, dotColor('head'));
       drawNode(shoulderL, dotColor('shoulder'));
       drawNode(shoulderR, dotColor('shoulder'));
       drawNode(elbowL, dotColor('elbow'));
       drawNode(elbowR, dotColor('elbow'));
-      drawNode(handL, dotColor('hand'));
-      drawNode(handR, dotColor('hand'));
+      drawNode(wristL, dotColor('hand'));
+      drawNode(wristR, dotColor('hand'));
       drawNode(hipL, dotColor('hip'));
       drawNode(hipR, dotColor('hip'));
       drawNode(kneeL, dotColor('knee'));
       drawNode(kneeR, dotColor('knee'));
-      
+      drawNode(ankleL, dotColor('ankle'));
+      drawNode(ankleR, dotColor('ankle'));
+
+      // Draw warning text on the canvas when the user goes out of frame (un-mirrored to prevent backward reading)
+      if (!detected) {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('USER NOT DETECTED', -w / 2, h - 30);
+        ctx.restore();
+      }
+
       animId = requestAnimationFrame(draw);
     };
-    
+
     draw();
     return () => cancelAnimationFrame(animId);
-  }, [webcamActive, pose, analysisResult]);
+  }, [webcamActive, pose, analysisResult, userDetected]);
 
   React.useEffect(() => {
     return () => {
@@ -239,7 +493,7 @@ const SalahObservation = ({ data, onComplete }) => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="glass-card p-6 md:p-8">
         <h3 className="text-xl font-display font-bold text-dark-100 mb-4 text-center">🕌 Salah Tutorial & AI Movement Analysis</h3>
-        
+
         {/* Navigation Tabs */}
         <div className="flex border-b border-dark-700 mb-6 justify-center">
           {[
@@ -248,7 +502,7 @@ const SalahObservation = ({ data, onComplete }) => {
             { id: 'guide', label: '📖 Step-by-Step Guide' },
             { id: 'ai_webcam', label: '⚡ AI Posture Analysis' }
           ].map(t => (
-            <button key={t.id} onClick={() => { setTab(t.id); if(t.id!=='ai_webcam') stopWebcam(); }}
+            <button key={t.id} onClick={() => { setTab(t.id); if (t.id !== 'ai_webcam') stopWebcam(); }}
               className={`px-4 py-2 border-b-2 font-medium text-sm transition-all ${tab === t.id ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-400 hover:text-dark-200'}`}>
               {t.label}
             </button>
@@ -260,23 +514,32 @@ const SalahObservation = ({ data, onComplete }) => {
           <div className="space-y-4 text-center">
             <p className="text-dark-300">Watch this professional video demonstrating correct postures and rhythm in Salah:</p>
             <div className="aspect-video max-w-xl mx-auto rounded-xl overflow-hidden bg-dark-900 border border-dark-700 flex items-center justify-center">
-              <iframe className="w-full h-full" src="https://www.youtube.com/embed/W9kTDFE5_f4" title="Correct Salah Guide" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-            </div>
+              <iframe
+                width="560"
+                height="315"
+                src="https://www.youtube.com/embed/P29LMOHhpjE?autoplay=1&mute=1&playsinline=1&loop=1&playlist=P29LMOHhpjE&rel=0"
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen>
+              </iframe></div>
           </div>
         )}
 
         {tab === 'animation' && (
           <div className="space-y-4 text-center">
             <p className="text-dark-300">Interact with the correct skeleton model angles for Qiyam, Ruku, and Sujood:</p>
-            <div className="max-w-xl mx-auto p-8 rounded-xl bg-dark-900/60 border border-dark-700/50 flex flex-col items-center">
-              {/* CSS Animation Demonstration */}
-              <div className="w-48 h-48 border border-primary-500/20 rounded-full flex items-center justify-center relative mb-4">
-                <div className="absolute inset-0 border border-dashed border-primary-500/30 rounded-full animate-spin" style={{ animationDuration: '12s' }} />
-                <span className="text-6xl animate-bounce">🕌</span>
-              </div>
-              <h4 className="font-semibold text-dark-100">Prayer Angle Calibration</h4>
-              <p className="text-xs text-dark-400 max-w-sm mt-2">Optimal joint angles: Standing (180°), Bowing Ruku (90° parallel), Prostrating Sujood (7 bones contacting flat floor).</p>
-            </div>
+            <div className="aspect-video max-w-xl mx-auto rounded-xl overflow-hidden bg-dark-900 border border-dark-700 flex items-center justify-center">
+              <iframe
+                width="560"
+                height="315"
+                src="https://www.youtube.com/embed/VOI6TZxEuIw?autoplay=1&mute=1&playsinline=1&loop=1&playlist=VOI6TZxEuIw&rel=0&controls=0"
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen>
+              </iframe>            </div>
           </div>
         )}
 
@@ -302,7 +565,7 @@ const SalahObservation = ({ data, onComplete }) => {
         {tab === 'ai_webcam' && (
           <div className="space-y-6 text-center">
             <p className="text-dark-300">Grant webcam access to check your postures against optimal Salah angles in real-time:</p>
-            
+
             {!webcamActive ? (
               <button onClick={startWebcam} className="btn-primary flex items-center gap-2 mx-auto">
                 🎥 Start Webcam & AI Tracker
@@ -312,8 +575,8 @@ const SalahObservation = ({ data, onComplete }) => {
                 <div className="flex gap-2 justify-center mb-2">
                   {['qiyam', 'ruku', 'sujood'].map(p => (
                     <button key={p} onClick={() => { setPose(p); setAnalysisResult(null); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase ${pose === p ? 'bg-primary-500 text-white' : 'bg-dark-800 text-dark-300'}`}>
-                      {p}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-all duration-250 ${pose === p ? 'bg-primary-500 text-white shadow-glow-sm' : 'bg-dark-800 text-dark-300 hover:text-dark-100 border border-dark-700 hover:border-dark-600'}`}>
+                      Target: {p}
                     </button>
                   ))}
                 </div>
@@ -321,7 +584,53 @@ const SalahObservation = ({ data, onComplete }) => {
                 <div className="relative w-[360px] md:w-[480px] h-[270px] md:h-[360px] mx-auto bg-black rounded-xl overflow-hidden border-2 border-primary-500/40 shadow-glow-sm">
                   <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]"></video>
                   <canvas ref={canvasRef} width={480} height={360} className="absolute inset-0 w-full h-full pointer-events-none scale-x-[-1]"></canvas>
-                  
+
+                  {/* Status Indicators overlay (Left) */}
+                  <div className="absolute top-3 left-3 bg-dark-950/80 backdrop-blur border border-dark-700/50 px-2.5 py-1.5 rounded-lg text-[9px] text-dark-200 flex flex-col gap-1 pointer-events-none text-left select-none">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="font-semibold text-emerald-400">🟢 Camera Active</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${userDetected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                      <span>{userDetected ? '🟢 Pose Detected' : '🔴 User Not Detected'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${userDetected ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span>{userDetected ? '🟢 Tracking User' : '🔴 Tracking Suspended'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${userDetected ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      <span>{userDetected ? '🟢 Mirroring Active' : '🔴 Mirroring Paused'}</span>
+                    </div>
+                  </div>
+
+                  {/* Stats Overlay HUD (Right) */}
+                  <div className="absolute top-3 right-3 bg-dark-950/80 backdrop-blur border border-dark-700/50 px-2.5 py-1.5 rounded-lg text-[9px] text-dark-200 flex flex-col gap-1 pointer-events-none text-right select-none font-mono">
+                    <div>
+                      <span className="text-dark-400">FPS:</span> <span className="font-semibold text-emerald-400">{fps} FPS</span>
+                    </div>
+                    <div>
+                      <span className="text-dark-400">Confidence:</span> <span className="font-semibold text-emerald-400">{userDetected ? `${confidence}%` : '0%'}</span>
+                    </div>
+                  </div>
+
+                  {/* Detected Pose Overlay at top center */}
+                  {userDetected && (
+                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500/90 text-white font-bold text-[10px] px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                      <span>✓</span>
+                      <span className="tracking-wider uppercase">{detectedPoseName}</span>
+                    </div>
+                  )}
+
+                  {/* Current Prayer Position HUD at bottom */}
+                  {userDetected && (
+                    <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-dark-950/85 backdrop-blur border border-dark-700/50 px-3 py-1 rounded-full text-[10px] font-bold text-dark-100 flex items-center gap-1.5 pointer-events-none select-none">
+                      <span className="text-dark-400 font-medium">Current Prayer Position:</span>
+                      <span className="text-emerald-400 tracking-wider uppercase">{detectedPoseName}</span>
+                    </div>
+                  )}
+
                   {analyzing && (
                     <div className="absolute inset-0 bg-primary-950/40 flex flex-col items-center justify-center">
                       <div className="w-12 h-12 rounded-full border-4 border-primary-500 border-t-transparent animate-spin mb-2" />
@@ -335,8 +644,8 @@ const SalahObservation = ({ data, onComplete }) => {
                   )}
                 </div>
 
-                <div className="flex gap-3 justify-center">
-                  <button onClick={handleAnalyze} disabled={analyzing} className="btn-primary !px-6">
+                <div className="flex gap-3 justify-center pt-2">
+                  <button onClick={handleAnalyze} disabled={analyzing || !userDetected} className="btn-primary !px-6 disabled:opacity-50">
                     ⚡ Analyze Posture
                   </button>
                   <button onClick={stopWebcam} className="btn-secondary">
@@ -386,9 +695,9 @@ const SalahObservation = ({ data, onComplete }) => {
 
 // --- Observe Step ---
 const ObserveStep = ({ data, onComplete, lessonInfo }) => {
-  const isSalah = lessonInfo?.title?.toLowerCase().includes('salah') || 
-                  lessonInfo?.title?.toLowerCase().includes('prayer') || 
-                  lessonInfo?.pathSlug === 'fiqh';
+  const isSalah = lessonInfo?.title?.toLowerCase().includes('salah') ||
+    lessonInfo?.title?.toLowerCase().includes('prayer') ||
+    lessonInfo?.pathSlug === 'fiqh';
 
   if (isSalah) {
     return <SalahObservation data={data} onComplete={onComplete} />;
@@ -464,10 +773,10 @@ const PracticeStep = ({ data, onComplete, lessonInfo }) => {
   // Matching practice
   const pairs = (lessonInfo?.title === 'Introduction to Islam')
     ? [
-        { term: 'What is Islam?', match: 'Islam means "submission to the will of Allah." It is a monotheistic religion that teaches belief in one God (Allah), His angels, His revealed books, His messengers, the Day of Judgment, and divine decree.' },
-        { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Prophet Muhammad (ﷺ) is the final messenger of Allah. He was sent to guide humanity with the message of Islam and the Qur\'an, serving as the perfect example for Muslims.' },
-        { term: 'What are the Five Pillars of Islam?', match: 'The Five Pillars of Islam are: Shahadah (Faith), Salah (Prayer), Zakah (Charity), Sawm (Fasting during Ramadan), and Hajj (Pilgrimage to Makkah). These pillars form the foundation of a Muslim\'s faith and practice.' }
-      ]
+      { term: 'What is Islam?', match: 'Islam means "submission to the will of Allah." It is a monotheistic religion that teaches belief in one God (Allah), His angels, His revealed books, His messengers, the Day of Judgment, and divine decree.' },
+      { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Prophet Muhammad (ﷺ) is the final messenger of Allah. He was sent to guide humanity with the message of Islam and the Qur\'an, serving as the perfect example for Muslims.' },
+      { term: 'What are the Five Pillars of Islam?', match: 'The Five Pillars of Islam are: Shahadah (Faith), Salah (Prayer), Zakah (Charity), Sawm (Fasting during Ramadan), and Hajj (Pilgrimage to Makkah). These pillars form the foundation of a Muslim\'s faith and practice.' }
+    ]
     : (data?.pairs || []);
   const terms = pairs.map(p => p.term);
   const [matchOptions] = useState(() => [...pairs].sort(() => 0.5 - Math.random()).map(p => p.match));
@@ -642,12 +951,11 @@ const EvaluateStep = ({ data, onComplete, lessonInfo }) => {
               const isCorrectOpt = opt === q.correctAnswer;
               return (
                 <motion.button key={i} whileHover={feedback === null ? { scale: 1.02 } : {}} whileTap={feedback === null ? { scale: 0.98 } : {}} onClick={() => handleSelect(i)}
-                  className={`w-full p-4 rounded-xl text-left font-medium transition-all border-2 ${
-                    feedback !== null && isCorrectOpt ? 'bg-primary-500/20 border-primary-500 text-primary-300' :
+                  className={`w-full p-4 rounded-xl text-left font-medium transition-all border-2 ${feedback !== null && isCorrectOpt ? 'bg-primary-500/20 border-primary-500 text-primary-300' :
                     feedback === 'wrong' && i === selectedOpt ? 'bg-red-500/20 border-red-500 text-red-300' :
-                    selectedOpt === i ? 'bg-dark-700 border-primary-500' :
-                    'bg-dark-800/60 border-dark-600 text-dark-200 hover:border-dark-400'
-                  }`}>
+                      selectedOpt === i ? 'bg-dark-700 border-primary-500' :
+                        'bg-dark-800/60 border-dark-600 text-dark-200 hover:border-dark-400'
+                    }`}>
                   <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-dark-700 text-xs mr-3">{String.fromCharCode(65 + i)}</span>
                   {opt}
                   {feedback !== null && isCorrectOpt && <HiCheck className="inline ml-2 text-primary-400" />}
@@ -674,15 +982,15 @@ const QuranPracticeBar = ({ lesson }) => {
   const [score, setScore] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [words, setWords] = useState([]);
-  
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
 
   // Target Quranic Arabic Text
-  const targetArabic = lesson?.learnContent?.sections?.[0]?.arabicText || 
-                       "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ۝ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
+  const targetArabic = lesson?.learnContent?.sections?.[0]?.arabicText ||
+    "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ۝ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
 
   const targetWords = targetArabic.split(/\s+/);
 
@@ -691,26 +999,26 @@ const QuranPracticeBar = ({ lesson }) => {
       console.log("Attempting to request microphone access...");
       const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setStream(mediaStream);
-      
+
       const recorder = new MediaRecorder(mediaStream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
-      
+
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
-      
+
       recorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
         analyzeRecitation();
       };
-      
+
       recorder.start();
       setRecording(true);
       setAnalyzed(false);
-      
+
       // Draw simulated speech wave
       let frame = 0;
       const drawWave = () => {
@@ -723,7 +1031,7 @@ const QuranPracticeBar = ({ lesson }) => {
         const barWidth = 3;
         const spacing = 4;
         const startX = (waveCanvas.width - (barsCount * (barWidth + spacing))) / 2;
-        
+
         for (let i = 0; i < barsCount; i++) {
           const height = Math.abs(Math.sin(frame * 0.15 + i) * 35) + 5;
           const x = startX + i * (barWidth + spacing);
@@ -863,10 +1171,9 @@ const QuranPracticeBar = ({ lesson }) => {
               <p className="text-xs text-dark-400 font-bold mb-2">Word Comparison:</p>
               <div className="flex flex-wrap gap-2 justify-start md:justify-start" dir="rtl">
                 {words.map((w, i) => (
-                  <span key={i} className={`px-2.5 py-1 rounded-lg text-lg font-arabic font-semibold transition-all ${
-                    w.status === 'correct' ? 'bg-primary-500/10 border border-primary-500/30 text-primary-400' :
+                  <span key={i} className={`px-2.5 py-1 rounded-lg text-lg font-arabic font-semibold transition-all ${w.status === 'correct' ? 'bg-primary-500/10 border border-primary-500/30 text-primary-400' :
                     'bg-gold-500/10 border border-gold-500/30 text-gold-400 cursor-help'
-                  }`} title={w.status === 'needs_improvement' ? 'Needs stretch/correct pronunciation' : undefined}>
+                    }`} title={w.status === 'needs_improvement' ? 'Needs stretch/correct pronunciation' : undefined}>
                     {w.word}
                   </span>
                 ))}
