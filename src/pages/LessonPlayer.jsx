@@ -427,7 +427,7 @@ const ObserveStep = ({ data, onComplete, lessonInfo }) => {
 };
 
 // --- Practice Step ---
-const PracticeStep = ({ data, onComplete }) => {
+const PracticeStep = ({ data, onComplete, lessonInfo }) => {
   const [matches, setMatches] = useState({});
   const [selected, setSelected] = useState(null);
   const [flipped, setFlipped] = useState({});
@@ -462,7 +462,13 @@ const PracticeStep = ({ data, onComplete }) => {
   }
 
   // Matching practice
-  const pairs = data?.pairs || [];
+  const pairs = (lessonInfo?.title === 'Introduction to Islam' || data?.pairs?.[0]?.term === 'Concept 1')
+    ? [
+        { term: 'What is Islam?', match: 'Explain the meaning of Islam and discuss its core beliefs.' },
+        { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Write a short note on the life and mission of Prophet Muhammad (ﷺ) and explain why he is considered the final messenger in Islam.' },
+        { term: 'What are the Five Pillars of Islam?', match: 'Name and briefly explain the Five Pillars of Islam and describe their importance in the life of a Muslim.' }
+      ]
+    : (data?.pairs || []);
   const terms = pairs.map(p => p.term);
   const [matchOptions] = useState(() => [...pairs].sort(() => 0.5 - Math.random()).map(p => p.match));
 
@@ -961,7 +967,7 @@ const LessonPlayer = () => {
     switch (stepKey) {
       case 'learn': return <LearnStep data={lesson.learnContent} onComplete={() => completeStep('learn')} />;
       case 'observe': return <ObserveStep data={lesson.observeContent} onComplete={() => completeStep('observe')} lessonInfo={lesson} />;
-      case 'practice': return <PracticeStep data={lesson.practiceContent} onComplete={() => completeStep('practice')} />;
+      case 'practice': return <PracticeStep data={lesson.practiceContent} onComplete={() => completeStep('practice')} lessonInfo={lesson} />;
       case 'evaluate': return <EvaluateStep data={lesson.quiz} onComplete={handleQuizComplete} lessonInfo={lesson} />;
       default: return null;
     }
