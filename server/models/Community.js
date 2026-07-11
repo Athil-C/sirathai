@@ -4,7 +4,7 @@ const communityPostSchema = new mongoose.Schema({
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   community: {
     type: String,
-    enum: ['thareeq', 'fiqh', 'quran', 'aqeeda'],
+    enum: ['thareeq', 'fiqh', 'quran', 'aqeeda', 'seerah'],
     required: true,
   },
   title: { type: String, required: true, maxlength: 200 },
