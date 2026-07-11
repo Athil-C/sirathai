@@ -462,11 +462,11 @@ const PracticeStep = ({ data, onComplete, lessonInfo }) => {
   }
 
   // Matching practice
-  const pairs = (lessonInfo?.title === 'Introduction to Islam' || data?.pairs?.[0]?.term === 'Concept 1')
+  const pairs = (lessonInfo?.title === 'Introduction to Islam')
     ? [
-        { term: 'What is Islam?', match: 'Explain the meaning of Islam and discuss its core beliefs.' },
-        { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Write a short note on the life and mission of Prophet Muhammad (ﷺ) and explain why he is considered the final messenger in Islam.' },
-        { term: 'What are the Five Pillars of Islam?', match: 'Name and briefly explain the Five Pillars of Islam and describe their importance in the life of a Muslim.' }
+        { term: 'What is Islam?', match: 'Islam means "submission to the will of Allah." It is a monotheistic religion that teaches belief in one God (Allah), His angels, His revealed books, His messengers, the Day of Judgment, and divine decree.' },
+        { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Prophet Muhammad (ﷺ) is the final messenger of Allah. He was sent to guide humanity with the message of Islam and the Qur\'an, serving as the perfect example for Muslims.' },
+        { term: 'What are the Five Pillars of Islam?', match: 'The Five Pillars of Islam are: Shahadah (Faith), Salah (Prayer), Zakah (Charity), Sawm (Fasting during Ramadan), and Hajj (Pilgrimage to Makkah). These pillars form the foundation of a Muslim\'s faith and practice.' }
       ]
     : (data?.pairs || []);
   const terms = pairs.map(p => p.term);

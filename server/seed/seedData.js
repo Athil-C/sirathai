@@ -113,9 +113,13 @@ function makeLessons(pathId, slug) {
       ],
     },
     practiceContent: {
-      type: practiceTypes[i % 3],
+      type: l.title === 'Introduction to Islam' ? 'matching' : practiceTypes[i % 3],
       instruction: `Practice what you learned about ${l.title}:`,
-      pairs: [
+      pairs: l.title === 'Introduction to Islam' ? [
+        { term: 'What is Islam?', match: 'Islam means "submission to the will of Allah." It is a monotheistic religion that teaches belief in one God (Allah), His angels, His revealed books, His messengers, the Day of Judgment, and divine decree.' },
+        { term: 'Who is Prophet Muhammad (ﷺ)?', match: 'Prophet Muhammad (ﷺ) is the final messenger of Allah. He was sent to guide humanity with the message of Islam and the Qur\'an, serving as the perfect example for Muslims.' },
+        { term: 'What are the Five Pillars of Islam?', match: 'The Five Pillars of Islam are: Shahadah (Faith), Salah (Prayer), Zakah (Charity), Sawm (Fasting during Ramadan), and Hajj (Pilgrimage to Makkah). These pillars form the foundation of a Muslim\'s faith and practice.' }
+      ] : [
         { term: 'Concept 1', match: 'Definition 1' },
         { term: 'Concept 2', match: 'Definition 2' },
         { term: 'Concept 3', match: 'Definition 3' },
