@@ -167,10 +167,12 @@ const communityPosts = [
   { community:'aqeeda', title:'Names of Allah for daily reflection', content:'Which names of Allah are recommended to reflect upon daily? How can understanding His names improve our connection with Him?' },
 ];
 
-async function seed() {
+export async function seedDatabase(shouldExit = false) {
   try {
-    await mongoose.connect(MONGO);
-    console.log('✅ Connected to MongoDB');
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(MONGO);
+      console.log('✅ Connected to MongoDB');
+    }
 
     // Clear existing data
     await Promise.all([
@@ -275,11 +277,15 @@ async function seed() {
     console.log('   Mufti:   mufti@siratai.com / mufti123');
     console.log('   Admin:   admin@siratai.com / admin123');
 
-    process.exit(0);
+    if (shouldExit) process.exit(0);
   } catch (err) {
     console.error('❌ Seed error:', err);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
+    throw err;
   }
 }
 
-seed();
+// Run immediately if executed directly via node
+if (process.argv[1] && (process.argv[1].endsWith('seedData.js') || process.argv[1].endsWith('seedData'))) {
+  seedDatabase(true);
+}

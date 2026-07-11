@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
+import { seedDatabase } from '../seed/seedData.js';
 
 const router = express.Router();
 
@@ -146,6 +147,16 @@ router.get('/me', protect, async (req, res) => {
         createdAt: user.createdAt,
       },
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @route   GET /api/auth/seed-production-db (temporary route to seed database directly on Vercel)
+router.get('/seed-production-db', async (req, res) => {
+  try {
+    await seedDatabase(false);
+    res.json({ success: true, message: 'Database seeded successfully!' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
