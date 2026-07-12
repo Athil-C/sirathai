@@ -847,9 +847,31 @@ const EvaluateStep = ({ data, onComplete, lessonInfo }) => {
   }
 
   const q = questions[current];
+
+  const isCorrectAnswer = (userAnswer, correctAnswer) => {
+    if (!userAnswer || !correctAnswer) return false;
+    const u = String(userAnswer).toLowerCase().trim();
+    const c = String(correctAnswer).toLowerCase().trim();
+    if (u === c) return true;
+
+    // Normalize: remove apostrophes and keep only alphanumeric chars
+    const clean = (str) => str.replace(/['’]/g, '').replace(/[^a-z0-9]/g, '');
+    if (clean(u) === clean(c)) return true;
+
+    // Handle options in parentheses, e.g. "Jibreel (Gabriel)" allows "Jibreel" or "Gabriel"
+    if (c.includes('(')) {
+      const mainPart = c.split('(')[0].trim();
+      const parenPart = c.match(/\(([^)]+)\)/)?.[1]?.trim() || '';
+      if (u === mainPart || u === parenPart || clean(u) === clean(mainPart) || clean(u) === clean(parenPart)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const totalCorrect = Object.entries(answers).filter(([i, a]) => {
     const qq = questions[i];
-    if (qq.type === 'fill_in') return a?.toLowerCase().trim() === qq.correctAnswer?.toLowerCase().trim();
+    if (qq.type === 'fill_in') return isCorrectAnswer(a, qq.correctAnswer);
     return qq.options?.[a] === qq.correctAnswer || a === qq.options?.indexOf(qq.correctAnswer);
   }).length;
   const pct = Math.round((totalCorrect / questions.length) * 100);
@@ -877,7 +899,7 @@ const EvaluateStep = ({ data, onComplete, lessonInfo }) => {
 
   const handleFillSubmit = () => {
     if (!fillAnswer.trim()) return;
-    const correct = fillAnswer.toLowerCase().trim() === q.correctAnswer?.toLowerCase().trim();
+    const correct = isCorrectAnswer(fillAnswer, q.correctAnswer);
     setFeedback(correct ? 'correct' : 'wrong');
     setAnswers(p => ({ ...p, [current]: fillAnswer }));
     setTimeout(advanceQuestion, 1200);

@@ -48,9 +48,7 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'How many pillars does Islam have?', options: ['3', '4', '5', '6'], answer: 2 },
-        { q: 'What does the word "Islam" mean?', options: ['Love', 'Submission/Peace', 'Power', 'Knowledge'], answer: 1 },
-        { q: 'Which pillar involves fasting?', options: ['Zakat', 'Hajj', 'Sawm', 'Salah'], answer: 2 },
+        { q: 'Before eating, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'Bismillah', explanation: 'Saying Bismillah (In the name of Allah) blesses the food.' }
       ],
     },
     2: {
@@ -94,9 +92,8 @@ const lessonContent = {
         words: ['Ash-hadu', 'an', 'la ilaha', 'illa Allah', 'wa ash-hadu', 'anna Muhammadan', 'rasul Allah'],
       },
       quiz: [
-        { q: 'What does "La ilaha illallah" mean?', options: ['God is great', 'There is no god but Allah', 'Praise be to God', 'In the name of God'], answer: 1 },
-        { q: 'How many parts does the Shahada have?', options: ['1', '2', '3', '4'], answer: 1 },
-        { q: 'What is required when saying the Shahada?', options: ['Witnesses only', 'Sincerity & understanding', 'Arabic fluency', 'Special clothing'], answer: 1 },
+        { q: 'After eating, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'Alhamdulillah', explanation: 'Alhamdulillah means "All praise is due to Allah".' },
+        { q: 'The Islamic greeting is ________.', type: 'fill_in', options: [], correctAnswer: 'As-salamu Alaikum', explanation: 'As-salamu Alaikum means "Peace be upon you".' }
       ],
     },
     3: {
@@ -145,9 +142,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'What should you say when waking up?', options: ['Bismillah', 'Alhamdulillah...ahyana', 'SubhanAllah', 'Astaghfirullah'], answer: 1 },
-        { q: 'How many times do we say SubhanAllah in morning dhikr?', options: ['10', '33', '50', '99'], answer: 1 },
-        { q: 'Which Ayah provides protection?', options: ['Ayatul Kursi', 'Al-Fatiha', 'Al-Ikhlas', 'Al-Falaq'], answer: 0 },
+        { q: 'The reply to "As-salamu Alaikum" is ________.', type: 'fill_in', options: [], correctAnswer: 'Wa Alaikumus-Salam', explanation: 'The reply means "And upon you be peace".' },
+        { q: 'Before doing something in the future, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'In shaa Allah', explanation: 'In shaa Allah means "If Allah wills".' }
       ],
     },
   },
@@ -185,9 +181,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'What is Fiqh?', options: ['Belief', 'Jurisprudence', 'History', 'Language'], answer: 1 },
-        { q: 'How many major schools of Fiqh are there?', options: ['2', '3', '4', '5'], answer: 2 },
-        { q: 'What is the primary source of Islamic law?', options: ['Ijma', 'Qiyas', 'Sunnah', 'Quran'], answer: 3 },
+        { q: 'Muslims pray ________ obligatory prayers every day.', type: 'fill_in', options: [], correctAnswer: 'Five', explanation: 'The five daily prayers are Fajr, Dhuhr, Asr, Maghrib, and Isha.' },
+        { q: 'The first prayer of the day is ________.', type: 'fill_in', options: [], correctAnswer: 'Fajr', explanation: 'Fajr is the dawn prayer.' }
       ],
     },
     2: {
@@ -221,9 +216,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'What is Tahara?', options: ['Prayer', 'Purification', 'Fasting', 'Charity'], answer: 1 },
-        { q: 'What is Tayammum?', options: ['Water ablution', 'Dry ablution', 'Full bath', 'Spiritual cleansing'], answer: 1 },
-        { q: '"Cleanliness is ___ of faith"', options: ['All', 'Half', 'A quarter', 'None'], answer: 1 },
+        { q: 'The sunset prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Maghrib', explanation: 'Maghrib is prayed right after the sun sets.' },
+        { q: 'Purification before prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Wudu', explanation: 'Wudu (ablution) is required before performing Salah.' }
       ],
     },
   },
@@ -261,9 +255,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'How many letters are in the Arabic alphabet?', options: ['24', '26', '28', '30'], answer: 2 },
-        { q: 'Which direction is Arabic read?', options: ['Left to right', 'Right to left', 'Top to bottom', 'Any direction'], answer: 1 },
-        { q: 'How many dots does "Tha (ث)" have?', options: ['0', '1', '2', '3'], answer: 3 },
+        { q: 'The Qur\'an contains ________ Surahs.', type: 'fill_in', options: [], correctAnswer: '114', explanation: 'There are 114 chapters (Surahs) in the Qur\'an.' },
+        { q: 'The first Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'Al-Fatihah', explanation: 'Surah Al-Fatihah means "The Opening".' }
       ],
     },
     2: {
@@ -298,9 +291,9 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'Which letter has NO dots: ح or خ?', options: ['ح (Ha)', 'خ (Kha)'], answer: 0 },
-        { q: 'What letter is ذ?', options: ['Dal', 'Dhal', 'Ra', 'Zay'], answer: 1 },
-        { q: 'ر and ز differ by:', options: ['Shape', 'A dot', 'Size', 'Color'], answer: 1 },
+        { q: 'The last Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'An-Nas', explanation: 'Surah An-Nas is the final chapter of the Qur\'an.' },
+        { q: 'The longest Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'Al-Baqarah', explanation: 'Surah Al-Baqarah has 286 verses.' },
+        { q: 'The shortest Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'Al-Kawthar', explanation: 'Surah Al-Kawthar has only 3 verses.' }
       ],
     },
   },
@@ -340,9 +333,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'How many articles of faith are there?', options: ['4', '5', '6', '7'], answer: 2 },
-        { q: 'What does Aqeeda mean?', options: ['Law', 'Creed/Belief', 'Prayer', 'Worship'], answer: 1 },
-        { q: 'What is Qadr?', options: ['Fasting', 'Charity', 'Divine Decree', 'Pilgrimage'], answer: 2 },
+        { q: 'Muslims worship only ________.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Muslims worship Allah alone, without any partners.' },
+        { q: 'The last Prophet is Prophet ________ ﷺ.', type: 'fill_in', options: [], correctAnswer: 'Muhammad', explanation: 'Prophet Muhammad ﷺ is the seal of the Prophets.' }
       ],
     },
     2: {
@@ -376,9 +368,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'What is Tawheed?', options: ['Many gods', 'Oneness of Allah', 'Prayer', 'Fasting'], answer: 1 },
-        { q: 'What is the greatest sin in Islam?', options: ['Lying', 'Shirk', 'Stealing', 'Missing prayer'], answer: 1 },
-        { q: 'How many categories of Tawheed are there?', options: ['1', '2', '3', '4'], answer: 2 },
+        { q: 'The first Prophet was ________ (AS).', type: 'fill_in', options: [], correctAnswer: 'Adam', explanation: 'Adam (AS) was the first human and the first Prophet.' },
+        { q: 'Belief in ________ is the first pillar of Iman.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Belief in Allah is the foundation of Islamic faith.' }
       ],
     },
     3: {
@@ -414,9 +405,8 @@ const lessonContent = {
         ],
       },
       quiz: [
-        { q: 'How many beautiful names does Allah have?', options: ['50', '72', '99', '100'], answer: 2 },
-        { q: 'What does Ar-Rahman mean?', options: ['The King', 'The Most Merciful', 'The Holy', 'The Creator'], answer: 1 },
-        { q: 'What is the reward for memorizing the 99 names?', options: ['Wealth', 'Paradise', 'Fame', 'Knowledge'], answer: 1 },
+        { q: 'The angel who brought revelation was ________.', type: 'fill_in', options: [], correctAnswer: 'Jibreel', explanation: 'Angel Jibreel (Gabriel) was responsible for conveying revelation.' },
+        { q: 'Believing that Allah is One is called ________.', type: 'fill_in', options: [], correctAnswer: 'Tawheed', explanation: 'Tawheed is the Islamic concept of monotheism.' }
       ],
     },
   },

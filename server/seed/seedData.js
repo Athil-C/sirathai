@@ -158,11 +158,96 @@ function makeLessons(pathId, slug) {
     ],
   };
 
-  const quizBank = [
-    { question: 'What is the correct answer?', type: 'multiple_choice', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'Option B', explanation: 'Option B is the correct answer for this topic.' },
-    { question: 'True or False: Islam means submission to Allah.', type: 'true_false', options: ['True', 'False'], correctAnswer: 'True', explanation: 'Islam means peace and submission.' },
-    { question: 'The first pillar of Islam is ___', type: 'fill_in', options: [], correctAnswer: 'Shahada', explanation: 'The Shahada is the declaration of faith.' },
-  ];
+  const pathQuizBanks = {
+    aqeeda: [
+      { question: 'Muslims worship only ________.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Muslims worship Allah alone, without any partners.' },
+      { question: 'The last Prophet is Prophet ________ ﷺ.', type: 'fill_in', options: [], correctAnswer: 'Muhammad', explanation: 'Prophet Muhammad ﷺ is the seal of the Prophets.' },
+      { question: 'The first Prophet was ________ (AS).', type: 'fill_in', options: [], correctAnswer: 'Adam', explanation: 'Adam (AS) was the first human and the first Prophet.' },
+      { question: 'Belief in ________ is the first pillar of Iman.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Belief in Allah is the foundation of Islamic faith.' },
+      { question: 'The angel who brought revelation was ________.', type: 'fill_in', options: [], correctAnswer: 'Jibreel', explanation: 'Angel Jibreel (Gabriel) was responsible for conveying revelation.' },
+      { question: 'Believing that Allah is One is called ________.', type: 'fill_in', options: [], correctAnswer: 'Tawheed', explanation: 'Tawheed is the Islamic concept of monotheism.' },
+      { question: 'Associating partners with Allah is called ________.', type: 'fill_in', options: [], correctAnswer: 'Shirk', explanation: 'Shirk is the opposite of Tawheed and is a major sin.' },
+      { question: 'Paradise is called ________.', type: 'fill_in', options: [], correctAnswer: 'Jannah', explanation: 'Jannah is the eternal home of the righteous.' },
+      { question: 'Hell is called ________.', type: 'fill_in', options: [], correctAnswer: 'Jahannam', explanation: 'Jahannam is the place of punishment in the Hereafter.' },
+      { question: 'The holy book of Islam is the ________.', type: 'fill_in', options: [], correctAnswer: 'Qur\'an', explanation: 'The Qur\'an is the literal word of Allah.' },
+      { question: 'Allah created the heavens and the ________.', type: 'fill_in', options: [], correctAnswer: 'Earth', explanation: 'Allah is the Creator of everything in existence.' },
+      { question: 'The Day of Resurrection is called Yawm al-________.', type: 'fill_in', options: [], correctAnswer: 'Qiyamah', explanation: 'Yawm al-Qiyamah is the Day of Judgment.' },
+      { question: 'The Arabic word for faith is ________.', type: 'fill_in', options: [], correctAnswer: 'Iman', explanation: 'Iman refers to strong belief and conviction.' },
+      { question: 'The Arabic word for repentance is ________.', type: 'fill_in', options: [], correctAnswer: 'Tawbah', explanation: 'Tawbah is turning back to Allah in sincere repentance.' },
+      { question: 'The father of the Prophets is Prophet ________ (AS).', type: 'fill_in', options: [], correctAnswer: 'Ibrahim', explanation: 'Prophet Ibrahim (Abraham) is known as the father of the Prophets.' },
+      { question: 'Prophet ________ (AS) built the Ark.', type: 'fill_in', options: [], correctAnswer: 'Nuh', explanation: 'Prophet Nuh (Noah) built the Ark to save the believers from the flood.' },
+      { question: 'Prophet ________ (AS) was swallowed by a great fish.', type: 'fill_in', options: [], correctAnswer: 'Yunus', explanation: 'Prophet Yunus (Jonah) was swallowed by a whale/great fish.' },
+      { question: 'Allah alone deserves all ________.', type: 'fill_in', options: [], correctAnswer: 'Worship', explanation: 'All worship belongs solely to Allah.' },
+      { question: 'The six pillars of ________ are the foundations of faith.', type: 'fill_in', options: [], correctAnswer: 'Iman', explanation: 'The six pillars of Iman form the core beliefs of a Muslim.' },
+      { question: 'The purpose of our creation is to worship ________.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Allah states in the Qur\'an that He created mankind only to worship Him.' }
+    ],
+    fiqh: [
+      { question: 'Muslims pray ________ obligatory prayers every day.', type: 'fill_in', options: [], correctAnswer: 'Five', explanation: 'The five daily prayers are Fajr, Dhuhr, Asr, Maghrib, and Isha.' },
+      { question: 'The first prayer of the day is ________.', type: 'fill_in', options: [], correctAnswer: 'Fajr', explanation: 'Fajr is the dawn prayer.' },
+      { question: 'The sunset prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Maghrib', explanation: 'Maghrib is prayed right after the sun sets.' },
+      { question: 'Purification before prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Wudu', explanation: 'Wudu (ablution) is required before performing Salah.' },
+      { question: 'Muslims pray facing the ________.', type: 'fill_in', options: [], correctAnswer: 'Qiblah', explanation: 'The Qiblah is the direction of the Ka\'bah in Makkah.' },
+      { question: 'The Ka\'bah is in ________.', type: 'fill_in', options: [], correctAnswer: 'Makkah', explanation: 'Makkah is the holiest city in Islam.' },
+      { question: 'The call to prayer is called the ________.', type: 'fill_in', options: [], correctAnswer: 'Adhan', explanation: 'The Adhan summons Muslims to prayer.' },
+      { question: 'Muslims fast during the month of ________.', type: 'fill_in', options: [], correctAnswer: 'Ramadan', explanation: 'Fasting in Ramadan is one of the pillars of Islam.' },
+      { question: 'The pilgrimage to Makkah is called ________.', type: 'fill_in', options: [], correctAnswer: 'Hajj', explanation: 'Hajj is the obligatory pilgrimage for those who are able.' },
+      { question: 'Obligatory charity is called ________.', type: 'fill_in', options: [], correctAnswer: 'Zakah', explanation: 'Zakah is a portion of wealth given to the needy.' },
+      { question: 'The Friday congregational prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Jumu\'ah', explanation: 'Jumu\'ah prayer replaces Dhuhr on Fridays.' },
+      { question: 'Bowing in prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Ruku\'', explanation: 'Ruku\' is the bowing posture in Salah.' },
+      { question: 'Prostration in prayer is called ________.', type: 'fill_in', options: [], correctAnswer: 'Sujood', explanation: 'Sujood is placing the forehead on the ground in prayer.' },
+      { question: 'The standing position in Salah is called ________.', type: 'fill_in', options: [], correctAnswer: 'Qiyam', explanation: 'Qiyam is standing upright in prayer.' },
+      { question: 'The minor pilgrimage is called ________.', type: 'fill_in', options: [], correctAnswer: 'Umrah', explanation: 'Umrah can be performed at any time of the year.' },
+      { question: 'Before Wudu, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'Bismillah', explanation: 'Saying Bismillah (In the name of Allah) is a Sunnah before starting Wudu.' },
+      { question: 'The prayer after Maghrib is ________.', type: 'fill_in', options: [], correctAnswer: 'Isha', explanation: 'Isha is the night prayer.' },
+      { question: 'The prayer before Dhuhr is ________.', type: 'fill_in', options: [], correctAnswer: 'Fajr', explanation: 'Fajr is the dawn prayer, which comes before Dhuhr.' },
+      { question: 'The month after Ramadan is ________.', type: 'fill_in', options: [], correctAnswer: 'Shawwal', explanation: 'Shawwal begins with the celebration of Eid al-Fitr.' },
+      { question: 'Worship should be done sincerely for ________.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Ikhlas (sincerity) means doing deeds solely for Allah\'s sake.' }
+    ],
+    quran: [
+      { question: 'The Qur\'an contains ________ Surahs.', type: 'fill_in', options: [], correctAnswer: '114', explanation: 'There are 114 chapters (Surahs) in the Qur\'an.' },
+      { question: 'The first Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'Al-Fatihah', explanation: 'Surah Al-Fatihah means \'The Opening\'.' },
+      { question: 'The last Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'An-Nas', explanation: 'Surah An-Nas is the final chapter of the Qur\'an.' },
+      { question: 'The longest Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'Al-Baqarah', explanation: 'Surah Al-Baqarah has 286 verses.' },
+      { question: 'The shortest Surah is ________.', type: 'fill_in', options: [], correctAnswer: 'Al-Kawthar', explanation: 'Surah Al-Kawthar has only 3 verses.' },
+      { question: 'The Qur\'an was revealed in the ________ language.', type: 'fill_in', options: [], correctAnswer: 'Arabic', explanation: 'The Qur\'an was revealed in clear Arabic.' },
+      { question: 'The Qur\'an was revealed to Prophet ________ ﷺ.', type: 'fill_in', options: [], correctAnswer: 'Muhammad', explanation: 'Prophet Muhammad ﷺ is the recipient of the final message.' },
+      { question: 'The angel of revelation was ________.', type: 'fill_in', options: [], correctAnswer: 'Jibreel', explanation: 'Angel Jibreel delivered the Qur\'an to the Prophet ﷺ.' },
+      { question: 'The Qur\'an was first revealed during ________.', type: 'fill_in', options: [], correctAnswer: 'Ramadan', explanation: 'The revelation began in the holy month of Ramadan.' },
+      { question: 'The Night of Power is called Laylatul ________.', type: 'fill_in', options: [], correctAnswer: 'Qadr', explanation: 'Laylatul Qadr is a night better than a thousand months.' },
+      { question: 'The Qur\'an is divided into ________ Juz\'.', type: 'fill_in', options: [], correctAnswer: '30', explanation: 'There are 30 equal parts (Juz\') in the Qur\'an.' },
+      { question: 'A chapter of the Qur\'an is called a ________.', type: 'fill_in', options: [], correctAnswer: 'Surah', explanation: 'A Surah is a chapter in the Holy Qur\'an.' },
+      { question: 'A verse of the Qur\'an is called an ________.', type: 'fill_in', options: [], correctAnswer: 'Ayah', explanation: 'An Ayah is a verse/sign in the Qur\'an.' },
+      { question: 'The written copy of the Qur\'an is called a ________.', type: 'fill_in', options: [], correctAnswer: 'Mushaf', explanation: 'A Mushaf is the compiled physical book of the Qur\'an.' },
+      { question: 'The first word revealed was ________.', type: 'fill_in', options: [], correctAnswer: 'Iqra\'', explanation: 'Iqra\' means \'Read\' or \'Recite\'.' },
+      { question: '\'Iqra\'\' means ________.', type: 'fill_in', options: [], correctAnswer: 'Read', explanation: 'The first command given to the Prophet ﷺ was to read.' },
+      { question: 'The Qur\'an is a source of ________ for humanity.', type: 'fill_in', options: [], correctAnswer: 'Guidance', explanation: 'The Qur\'an guides people to the truth.' },
+      { question: 'Surah Al-Ikhlas teaches the Oneness of ________.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Surah Al-Ikhlas declares the absolute oneness of Allah.' },
+      { question: 'The Qur\'an is the ________ revelation from Allah.', type: 'fill_in', options: [], correctAnswer: 'Final', explanation: 'No divine books will be revealed after the Qur\'an.' },
+      { question: 'Reading the Qur\'an is an act of ________.', type: 'fill_in', options: [], correctAnswer: 'Worship', explanation: 'Reciting the Qur\'an brings great rewards.' }
+    ],
+    thareeq: [
+      { question: 'Before eating, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'Bismillah', explanation: 'Saying Bismillah (In the name of Allah) blesses the food.' },
+      { question: 'After eating, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'Alhamdulillah', explanation: 'Alhamdulillah means \'All praise is due to Allah\'.' },
+      { question: 'The Islamic greeting is ________.', type: 'fill_in', options: [], correctAnswer: 'As-salamu Alaikum', explanation: 'As-salamu Alaikum means \'Peace be upon you\'.' },
+      { question: 'The reply to "As-salamu Alaikum" is ________.', type: 'fill_in', options: [], correctAnswer: 'Wa Alaikumus-Salam', explanation: 'The reply means \'And upon you be peace\'.' },
+      { question: 'Before doing something in the future, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'In shaa Allah', explanation: 'In shaa Allah means \'If Allah wills\'.' },
+      { question: 'To seek Allah\'s forgiveness, Muslims say ________.', type: 'fill_in', options: [], correctAnswer: 'Astaghfirullah', explanation: 'Astaghfirullah means \'I seek forgiveness from Allah\'.' },
+      { question: '"All praise is due to Allah" in Arabic is ________.', type: 'fill_in', options: [], correctAnswer: 'Alhamdulillah', explanation: 'Alhamdulillah expresses gratitude to Allah.' },
+      { question: '"Glory be to Allah" in Arabic is ________.', type: 'fill_in', options: [], correctAnswer: 'SubhanAllah', explanation: 'SubhanAllah declares Allah\'s perfection.' },
+      { question: '"Allah is the Greatest" in Arabic is ________.', type: 'fill_in', options: [], correctAnswer: 'Allahu Akbar', explanation: 'Allahu Akbar is the declaration of Allah\'s greatness.' },
+      { question: '"May Allah reward you with goodness" is ________.', type: 'fill_in', options: [], correctAnswer: 'JazakAllahu Khayran', explanation: 'This is a beautiful way to thank someone in Islam.' },
+      { question: 'Muslims should speak with ________.', type: 'fill_in', options: [], correctAnswer: 'Kindness', explanation: 'Kind words are charity in Islam.' },
+      { question: 'Islam teaches Muslims to respect their ________.', type: 'fill_in', options: [], correctAnswer: 'Parents', explanation: 'Respecting parents is highly emphasized in Islam.' },
+      { question: 'Muslims should be ________ when dealing with others.', type: 'fill_in', options: [], correctAnswer: 'Honest', explanation: 'Honesty is a core characteristic of a Muslim.' },
+      { question: 'Smiling at others is an act of ________.', type: 'fill_in', options: [], correctAnswer: 'Charity', explanation: 'The Prophet ﷺ said that smiling at your brother is charity.' },
+      { question: 'Muslims should avoid ________ about others.', type: 'fill_in', options: [], correctAnswer: 'Backbiting', explanation: 'Backbiting is speaking ill of others in their absence.' },
+      { question: 'Muslims should keep their ________.', type: 'fill_in', options: [], correctAnswer: 'Promises', explanation: 'Fulfilling promises is an obligation in Islam.' },
+      { question: 'Islam teaches Muslims to be ________.', type: 'fill_in', options: [], correctAnswer: 'Patient', explanation: 'Patience (Sabr) is a key virtue in Islam.' },
+      { question: 'Muslims should help their ________.', type: 'fill_in', options: [], correctAnswer: 'Neighbours', explanation: 'Islam emphasizes the rights of neighbours.' },
+      { question: 'The best example for Muslims is Prophet ________ ﷺ.', type: 'fill_in', options: [], correctAnswer: 'Muhammad', explanation: 'Prophet Muhammad ﷺ is the ultimate role model.' },
+      { question: 'Muslims should remember ________ often.', type: 'fill_in', options: [], correctAnswer: 'Allah', explanation: 'Remembrance (Dhikr) keeps the heart connected to Allah.' }
+    ]
+  };
 
   const practiceTypes = ['matching', 'flashcards', 'ordering'];
 
@@ -212,7 +297,21 @@ function makeLessons(pathId, slug) {
         ],
         words: ['First', 'Second', 'Third', 'Fourth', 'Fifth'],
       },
-      quiz: quizBank.map(q => ({ ...q })),
+      quiz: (() => {
+        const pathQs = pathQuizBanks[slug] || [];
+        const totalQs = pathQs.length;
+        if (totalQs === 0) {
+          return [
+            { question: 'What is the correct answer?', type: 'multiple_choice', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'Option B', explanation: 'Option B is the correct answer for this topic.' },
+            { question: 'True or False: Islam means submission to Allah.', type: 'true_false', options: ['True', 'False'], correctAnswer: 'True', explanation: 'Islam means peace and submission.' },
+            { question: 'The first pillar of Islam is ___', type: 'fill_in', options: [], correctAnswer: 'Shahada', explanation: 'The Shahada is the declaration of faith.' }
+          ];
+        }
+        const lessonsCount = (bank[slug] || []).length;
+        const startIdx = Math.floor((i * totalQs) / lessonsCount);
+        const endIdx = Math.floor(((i + 1) * totalQs) / lessonsCount);
+        return pathQs.slice(startIdx, endIdx).map(q => ({ ...q }));
+      })(),
       passScore: 70,
       masteryChallenge: {
         enabled: l.nodeType === 'milestone',
