@@ -5,6 +5,8 @@ import { HiArrowLeft, HiArrowRight, HiCheck, HiStar, HiLightningBolt } from 'rea
 import { FaTrophy, FaBook, FaEye, FaHandsHelping, FaClipboardCheck } from 'react-icons/fa';
 import { getLesson, updateStep, checkAchievements } from '../services/api';
 import toast from 'react-hot-toast';
+import { analyzeSalahPosture } from '../utils/salahPostureAnalyzer';
+
 
 const STEPS = [
   { key: 'learn', label: 'Learn', icon: FaBook, color: 'from-blue-500 to-blue-600' },
@@ -57,7 +59,7 @@ const LearnStep = ({ data, onComplete }) => {
 // Helper to mathematically classify Salah postures from 2D skeleton joint keypoints
 const classifySalahPose = (landmarks) => {
   if (!landmarks) return { pose: 'UNKNOWN', score: 0 };
-  
+
   // Landmark index mapping
   const nose = landmarks[0];
   const lShoulder = landmarks[11];
@@ -99,7 +101,7 @@ const classifySalahPose = (landmarks) => {
   const kneeY = (lKnee.y + rKnee.y) / 2;
   const ankleY = (lAnkle.y + rAnkle.y) / 2;
   const shoulderY = (lShoulder.y + rShoulder.y) / 2;
-  
+
   const height = Math.abs(ankleY - headY) || 1;
 
   // 1. Sujood (Prostration): Head is below the knees and close to the floor
@@ -145,6 +147,10 @@ const SalahObservation = ({ data, onComplete }) => {
   const videoRef = React.useRef(null);
   const canvasRef = React.useRef(null);
 
+  // Madhhab selector and voice coach settings
+  const [selectedMadhhab, setSelectedMadhhab] = useState('hanafi');
+  const [voiceCoachEnabled, setVoiceCoachEnabled] = useState(true);
+
   // AI Real-time Pose tracking states
   const [fps, setFps] = useState(60);
   const [confidence, setConfidence] = useState(98);
@@ -157,6 +163,9 @@ const SalahObservation = ({ data, onComplete }) => {
   const currentJointsRef = React.useRef({});
   const poseInstanceRef = React.useRef(null);
   const isProcessingRef = React.useRef(false);
+
+  // Real-time frame analysis for interactive skeleton coloring
+  const realTimeAnalysisRef = React.useRef(null);
 
   // Sync stream to videoRef element once it is mounted/rendered
   React.useEffect(() => {
@@ -246,6 +255,10 @@ const SalahObservation = ({ data, onComplete }) => {
     trackingActiveRef.current = false;
     currentJointsRef.current = {};
     isProcessingRef.current = false;
+    realTimeAnalysisRef.current = null;
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
     if (poseInstanceRef.current) {
       try {
         poseInstanceRef.current.close();
@@ -261,26 +274,22 @@ const SalahObservation = ({ data, onComplete }) => {
     setAnalysisResult(null);
     setTimeout(() => {
       setAnalyzing(false);
-      if (pose === 'qiyam') {
-        setAnalysisResult({
-          score: 95,
-          mistakes: [],
-          suggestions: ['Your Qiyam stance is excellent. Keep your eyes focused on the ground where your forehead will rest in Sujood.']
-        });
-      } else if (pose === 'ruku') {
-        setAnalysisResult({
-          score: 72,
-          mistakes: ['Incorrect Ruku angle (detected: 72° instead of 90°)'],
-          suggestions: ['Standing posture correction: Bend your waist more until your back is flat like a table. Ensure your knees are straight and lock your hands onto them.']
-        });
-      } else {
-        setAnalysisResult({
-          score: 84,
-          mistakes: ['Incorrect Sujood posture: Elbows resting on floor'],
-          suggestions: ['Ensure seven bones make contact: forehead, nose, two palms, two knees, and toes of both feet. Make sure your forearms are raised off the floor.']
-        });
+      const landmarks = latestLandmarksRef.current;
+      const result = analyzeSalahPosture(landmarks, pose, selectedMadhhab);
+      setAnalysisResult(result);
+      
+      // Trigger voice feedback if enabled
+      if (voiceCoachEnabled && result && result.voiceGuide && typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(result.voiceGuide);
+        const voices = window.speechSynthesis.getVoices();
+        const englishVoice = voices.find(v => v.lang.includes('en') && v.name.toLowerCase().includes('google')) || 
+                           voices.find(v => v.lang.includes('en'));
+        if (englishVoice) utterance.voice = englishVoice;
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
       }
-    }, 2500);
+    }, 2000);
   };
 
   React.useEffect(() => {
@@ -331,30 +340,29 @@ const SalahObservation = ({ data, onComplete }) => {
         setUserDetected(detected);
       }
 
-      // 2. Perform periodic posture classification
+      // 2. Perform periodic posture classification and real-time bone analysis
       if (latestLandmarksRef.current && (now - lastClassificationTime > 250)) {
         const result = classifySalahPose(latestLandmarksRef.current);
         setDetectedPoseName(result.pose);
         setConfidence(result.score);
+        
+        // Dynamic bone/joint evaluation for real-time skeleton coloring
+        const frameAnalysis = analyzeSalahPosture(latestLandmarksRef.current, pose, selectedMadhhab);
+        realTimeAnalysisRef.current = frameAnalysis;
+
         lastClassificationTime = now;
       }
-
-      // Stroke rendering setup for glowing green skeleton guides
-      ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = 3.5;
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = '#10b981';
 
       // Helper to retrieve and interpolate coordinates using LERP to ensure ultra-smooth transitions
       const getJointCoords = (index, fallbackTarget) => {
         if (latestLandmarksRef.current && latestLandmarksRef.current[index]) {
           const lm = latestLandmarksRef.current[index];
           const visibility = lm.visibility !== undefined ? lm.visibility : 1;
-          
+
           if (visibility > 0.5) {
             const targetX = lm.x * w;
             const targetY = lm.y * h;
-            
+
             if (!currentJointsRef.current[index]) {
               currentJointsRef.current[index] = { x: targetX, y: targetY };
             } else {
@@ -362,7 +370,7 @@ const SalahObservation = ({ data, onComplete }) => {
               currentJointsRef.current[index].y = lerp(currentJointsRef.current[index].y, targetY, 0.18);
             }
           }
-          
+
           if (currentJointsRef.current[index]) {
             return currentJointsRef.current[index];
           }
@@ -405,32 +413,54 @@ const SalahObservation = ({ data, onComplete }) => {
         kneeR = { x: w * 0.57 + noise(20), y: h * 0.85 + noise(21) };
         ankleL = { x: w * 0.43 + noise(22), y: h * 0.96 + noise(23) };
         ankleR = { x: w * 0.57 + noise(24), y: h * 0.96 + noise(25) };
-
-        // Dim transparency/faded rendering when standby
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.25)';
-        ctx.shadowColor = 'rgba(16, 185, 129, 0.1)';
       }
 
-      const drawLine = (p1, p2) => {
+      // Stroke rendering setup for glowing/dynamic skeleton guides
+      ctx.lineWidth = detected ? 3.5 : 2.5;
+      ctx.shadowBlur = detected ? 12 : 8;
+      ctx.shadowColor = detected 
+        ? (analysisResult || realTimeAnalysisRef.current ? 'rgba(16, 185, 129, 0.4)' : '#10b981') 
+        : 'rgba(16, 185, 129, 0.1)';
+
+      const getPartColor = (partName) => {
+        if (!detected) return 'rgba(16, 185, 129, 0.4)';
+        const activeResult = analysisResult || realTimeAnalysisRef.current;
+        if (!activeResult || !activeResult.bodyAnalysis) return '#10b981';
+        const part = activeResult.bodyAnalysis.find(p => p.bodyPart.toLowerCase() === partName.toLowerCase());
+        if (!part) return '#10b981';
+        if (part.status === "Correct") return '#10b981';
+        if (part.status === "Slight Adjustment Needed") return '#f59e0b';
+        if (part.status === "Incorrect") return '#ef4444';
+        return 'rgba(16, 185, 129, 0.4)';
+      };
+
+      const drawLine = (p1, p2, color) => {
         ctx.beginPath();
+        ctx.strokeStyle = detected ? (color || '#10b981') : 'rgba(16, 185, 129, 0.25)';
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
       };
 
-      drawLine(head, { x: (shoulderL.x + shoulderR.x) / 2, y: (shoulderL.y + shoulderR.y) / 2 });
-      drawLine(shoulderL, shoulderR);
-      drawLine(shoulderL, elbowL);
-      drawLine(shoulderR, elbowR);
-      drawLine(elbowL, wristL);
-      drawLine(elbowR, wristR);
-      drawLine(shoulderL, hipL);
-      drawLine(shoulderR, hipR);
-      drawLine(hipL, hipR);
-      drawLine(hipL, kneeL);
-      drawLine(hipR, kneeR);
-      drawLine(kneeL, ankleL);
-      drawLine(kneeR, ankleR);
+      const spineColor = getPartColor('Back');
+      const shoulderColor = getPartColor('Shoulders');
+      const handsColor = getPartColor('Hands');
+      const legsColor = getPartColor('Legs');
+      const feetColor = getPartColor('Feet');
+
+      drawLine(head, { x: (shoulderL.x + shoulderR.x) / 2, y: (shoulderL.y + shoulderR.y) / 2 }, getPartColor('Head'));
+      drawLine(shoulderL, shoulderR, shoulderColor);
+      drawLine(shoulderL, elbowL, handsColor);
+      drawLine(shoulderR, elbowR, handsColor);
+      drawLine(elbowL, wristL, handsColor);
+      drawLine(elbowR, wristR, handsColor);
+      drawLine(shoulderL, hipL, spineColor);
+      drawLine(shoulderR, hipR, spineColor);
+      drawLine(hipL, hipR, spineColor);
+      drawLine(hipL, kneeL, legsColor);
+      drawLine(hipR, kneeR, legsColor);
+      drawLine(kneeL, ankleL, feetColor);
+      drawLine(kneeR, ankleR, feetColor);
 
       const drawNode = (p, color) => {
         ctx.fillStyle = color || '#34d399';
@@ -441,11 +471,12 @@ const SalahObservation = ({ data, onComplete }) => {
 
       const dotColor = (jointName) => {
         if (!detected) return 'rgba(52, 211, 153, 0.3)';
-        if (analysisResult) {
-          if (pose === 'ruku' && jointName === 'hip') return '#f87171';
-          if (pose === 'qiyam' && jointName === 'head') return '#34d399';
-          if (pose === 'sujood' && jointName === 'elbow') return '#f87171';
-        }
+        if (jointName === 'head') return getPartColor('Head');
+        if (jointName === 'shoulder') return getPartColor('Shoulders');
+        if (jointName === 'elbow' || jointName === 'hand') return getPartColor('Hands');
+        if (jointName === 'hip') return getPartColor('Back');
+        if (jointName === 'knee') return getPartColor('Legs');
+        if (jointName === 'ankle') return getPartColor('Feet');
         return '#34d399';
       };
 
@@ -479,7 +510,7 @@ const SalahObservation = ({ data, onComplete }) => {
 
     draw();
     return () => cancelAnimationFrame(animId);
-  }, [webcamActive, pose, analysisResult, userDetected]);
+  }, [webcamActive, pose, analysisResult, userDetected, selectedMadhhab]);
 
   React.useEffect(() => {
     return () => {
@@ -572,15 +603,58 @@ const SalahObservation = ({ data, onComplete }) => {
               </button>
             ) : (
               <div className="space-y-4">
-                <div className="flex gap-2 justify-center mb-2">
-                  {['qiyam', 'ruku', 'sujood'].map(p => (
-                    <button key={p} onClick={() => { setPose(p); setAnalysisResult(null); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-all duration-250 ${pose === p ? 'bg-primary-500 text-white shadow-glow-sm' : 'bg-dark-800 text-dark-300 hover:text-dark-100 border border-dark-700 hover:border-dark-600'}`}>
-                      Target: {p}
-                    </button>
-                  ))}
+                {/* Advanced Multi-option Selector controls */}
+                <div className="flex flex-col gap-3 max-w-xl mx-auto p-4 rounded-xl bg-dark-900/40 border border-dark-800">
+                  {/* Target Postures Row */}
+                  <div className="flex flex-col gap-1 text-left">
+                    <span className="text-[10px] text-dark-400 font-bold uppercase tracking-wider">Target Posture</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {[
+                        { id: 'qiyam', label: 'Standing (Qiyam)' },
+                        { id: 'ruku', label: 'Bowing (Ruku\')' },
+                        { id: 'sujood', label: 'Prostration (Sujood)' },
+                        { id: 'jalsa', label: 'Sitting (Jalsa)' },
+                        { id: 'tashahhud', label: 'Tashahhud' },
+                        { id: 'salam', label: 'Salam' }
+                      ].map(p => (
+                        <button key={p.id} onClick={() => { setPose(p.id); setAnalysisResult(null); }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${pose === p.id ? 'bg-primary-500 text-white shadow-glow-sm' : 'bg-dark-800 text-dark-300 hover:text-dark-100 border border-dark-700 hover:border-dark-600'}`}>
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Madhhab and Voice controls */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-dark-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-dark-300 font-medium">Folding Madhhab:</span>
+                      <select 
+                        value={selectedMadhhab} 
+                        onChange={(e) => { setSelectedMadhhab(e.target.value); setAnalysisResult(null); }}
+                        className="bg-dark-800 border border-dark-700 text-dark-200 rounded-lg text-xs px-2.5 py-1.5 focus:outline-none focus:border-primary-500 font-medium cursor-pointer"
+                      >
+                        <option value="hanafi">Hanafi (Below Navel)</option>
+                        <option value="shafi_i">Shafi'i (Below Chest)</option>
+                        <option value="maliki">Maliki (Sadl - Arms Down)</option>
+                        <option value="hanbali">Hanbali (Chest / Navel)</option>
+                      </select>
+                    </div>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <span className="text-xs text-dark-300 font-medium">Voice Coach Guide:</span>
+                      <input 
+                        type="checkbox" 
+                        checked={voiceCoachEnabled} 
+                        onChange={(e) => setVoiceCoachEnabled(e.target.checked)}
+                        className="sr-only peer" 
+                      />
+                      <div className="relative w-9 h-5 bg-dark-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-200 after:border-dark-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-500 peer-checked:after:bg-white" />
+                    </label>
+                  </div>
                 </div>
 
+                {/* Webcam Display Frame */}
                 <div className="relative w-[360px] md:w-[480px] h-[270px] md:h-[360px] mx-auto bg-black rounded-xl overflow-hidden border-2 border-primary-500/40 shadow-glow-sm">
                   <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]"></video>
                   <canvas ref={canvasRef} width={480} height={360} className="absolute inset-0 w-full h-full pointer-events-none scale-x-[-1]"></canvas>
@@ -636,9 +710,9 @@ const SalahObservation = ({ data, onComplete }) => {
                       <div className="w-12 h-12 rounded-full border-4 border-primary-500 border-t-transparent animate-spin mb-2" />
                       <p className="text-white font-semibold text-sm">Scanning joints & angles...</p>
                       <div className="absolute left-0 right-0 h-1 bg-primary-500 animate-pulse" style={{
-                        animationDuration: '1s',
-                        animationIterationCount: 'infinite',
-                        top: '50%'
+                         animationDuration: '1s',
+                         animationIterationCount: 'infinite',
+                         top: '50%'
                       }} />
                     </div>
                   )}
@@ -653,32 +727,186 @@ const SalahObservation = ({ data, onComplete }) => {
                   </button>
                 </div>
 
+                {/* SiratAI Dynamic Coaching Report */}
                 {analysisResult && (
-                  <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto text-left p-4 rounded-xl bg-dark-900/80 border border-dark-700">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="font-bold text-dark-100 capitalize">{pose} Result:</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${analysisResult.score >= 80 ? 'bg-primary-500/20 text-primary-400' : 'bg-red-500/20 text-red-400'}`}>
-                        {analysisResult.score}% Accuracy
-                      </span>
-                    </div>
-
-                    {analysisResult.mistakes.length > 0 ? (
-                      <div className="mb-2">
-                        <p className="text-xs text-red-400 font-bold">Detected Mistakes:</p>
-                        <ul className="list-disc pl-4 text-xs text-dark-300">
-                          {analysisResult.mistakes.map((m, i) => <li key={i}>{m}</li>)}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 15 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    className="max-w-2xl mx-auto text-left p-6 md:p-8 rounded-2xl bg-dark-900/90 border border-dark-700/80 backdrop-blur space-y-6 shadow-xl"
+                  >
+                    {analysisResult.unreliable ? (
+                      /* Low Confidence State */
+                      <div className="p-5 rounded-xl bg-red-950/20 border border-red-800/40 text-center space-y-3">
+                        <div className="text-4xl">⚠️</div>
+                        <h4 className="text-lg font-bold text-red-400">Unable to analyse posture accurately</h4>
+                        <p className="text-sm text-dark-300">Please make sure of the following for accurate tracking:</p>
+                        <ul className="inline-block text-left text-xs space-y-1.5 text-dark-300 list-disc pl-5">
+                          <li>Entire body is visible in the frame</li>
+                          <li>Good lighting in the room</li>
+                          <li>Camera placed at chest height</li>
+                          <li>Stand 2–3 meters away from the camera</li>
                         </ul>
                       </div>
                     ) : (
-                      <p className="text-xs text-primary-400 font-bold mb-2">✓ No structural mistakes detected!</p>
-                    )}
+                      /* Posture Coaching Result Stance Dashboard */
+                      <>
+                        {/* Status HUD Header */}
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-dark-800">
+                          <div>
+                            <span className="text-xs text-dark-400 font-semibold uppercase tracking-wider">Detected Stance</span>
+                            <h4 className="text-2xl font-bold text-dark-100 mt-0.5">{analysisResult.posture}</h4>
+                          </div>
 
-                    <div>
-                      <p className="text-xs text-gold-400 font-bold">Suggestions:</p>
-                      <ul className="list-disc pl-4 text-xs text-dark-300">
-                        {analysisResult.suggestions.map((s, i) => <li key={i}>{s}</li>)}
-                      </ul>
-                    </div>
+                          <div className="flex items-center gap-4">
+                            {/* Circular Gauge */}
+                            <div className="relative w-16 h-16 flex items-center justify-center">
+                              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                  className="text-dark-800"
+                                  strokeWidth="3.5"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                                <path
+                                  className={
+                                    analysisResult.severity === 'Green' ? 'text-emerald-500' :
+                                    analysisResult.severity === 'Yellow' ? 'text-amber-500' :
+                                    analysisResult.severity === 'Orange' ? 'text-orange-500' : 'text-red-500'
+                                  }
+                                  strokeDasharray={`${analysisResult.overallScore}, 100`}
+                                  strokeWidth="3.5"
+                                  strokeLinecap="round"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                              </svg>
+                              <div className="absolute font-bold text-sm text-dark-100">
+                                {analysisResult.overallScore}%
+                              </div>
+                            </div>
+
+                            {/* Text Badge */}
+                            <div className="text-right">
+                              <span className="text-xs text-dark-400 font-semibold block">SiratAI Evaluation</span>
+                              <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
+                                analysisResult.severity === 'Green' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                analysisResult.severity === 'Yellow' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                analysisResult.severity === 'Orange' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                                'bg-red-500/20 text-red-400 border border-red-500/30'
+                              }`}>
+                                {analysisResult.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Excellent posture display if Score >= 95% */}
+                        {analysisResult.overallScore >= 95 && (
+                          <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-center space-y-1">
+                            <h5 className="font-bold text-emerald-400 text-base">Excellent {analysisResult.posture}</h5>
+                            <p className="text-xs text-dark-300">Your posture closely matches the ideal position. Maintain this posture.</p>
+                          </div>
+                        )}
+
+                        {/* Body Part Analysis Grid */}
+                        <div>
+                          <h5 className="text-xs font-bold text-dark-400 uppercase tracking-wider mb-3">Joint Breakdown</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {analysisResult.bodyAnalysis.map((part, index) => (
+                              <div 
+                                key={index} 
+                                className="flex flex-col p-3.5 rounded-xl bg-dark-950/50 border border-dark-800 hover:border-dark-700/60 transition-colors space-y-1.5"
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-sm text-dark-200">{part.bodyPart}</span>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                                    part.status === 'Correct' ? 'bg-emerald-500/15 text-emerald-400' :
+                                    part.status === 'Slight Adjustment Needed' ? 'bg-amber-500/15 text-amber-400' :
+                                    part.status === 'Incorrect' ? 'bg-red-500/15 text-red-400' :
+                                    'bg-dark-800 text-dark-400'
+                                  }`}>
+                                    {part.status}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-dark-400 leading-normal">{part.feedback}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Strengths and Corrections block */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                          {/* Strengths */}
+                          <div className="p-4 rounded-xl bg-emerald-950/10 border border-emerald-900/20">
+                            <h5 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Strengths</h5>
+                            <ul className="space-y-1.5 text-xs text-dark-300">
+                              {analysisResult.strengths.map((str, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5">
+                                  <span className="text-emerald-500">✔</span>
+                                  <span>{str}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* Corrections (max 3 at once, starting positive, non-overwhelming) */}
+                          <div className="p-4 rounded-xl bg-amber-950/10 border border-amber-900/20">
+                            <h5 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Corrections Required</h5>
+                            {analysisResult.corrections.length > 0 ? (
+                              <ul className="space-y-1.5 text-xs text-dark-300">
+                                {analysisResult.corrections.map((corr, idx) => (
+                                  <li key={idx} className="flex items-start gap-1.5">
+                                    <span className="text-amber-500">•</span>
+                                    <span>{corr}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-xs text-emerald-400 font-semibold">Great job! No posture corrections needed currently.</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Voice Guide Supportive Teacher Box */}
+                        <div className="p-4 rounded-xl bg-primary-950/20 border border-primary-800/20 flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-lg text-primary-400 flex-shrink-0 animate-pulse">
+                            👤
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-primary-400">SiratAI Posture Coach</span>
+                              {typeof window !== 'undefined' && window.speechSynthesis && (
+                                <button 
+                                  onClick={() => {
+                                    if (window.speechSynthesis) {
+                                      window.speechSynthesis.cancel();
+                                      const utterance = new SpeechSynthesisUtterance(analysisResult.voiceGuide);
+                                      const voices = window.speechSynthesis.getVoices();
+                                      const englishVoice = voices.find(v => v.lang.includes('en') && v.name.toLowerCase().includes('google')) || 
+                                                         voices.find(v => v.lang.includes('en'));
+                                      if (englishVoice) utterance.voice = englishVoice;
+                                      utterance.rate = 0.95;
+                                      window.speechSynthesis.speak(utterance);
+                                    }
+                                  }}
+                                  className="text-[10px] text-primary-400 hover:text-primary-300 font-semibold underline flex items-center gap-1"
+                                >
+                                  🔊 Play Voice Guide
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-sm text-dark-200 italic leading-relaxed">
+                              "{analysisResult.voiceGuide}"
+                            </p>
+                            <p className="text-[10px] text-dark-500 mt-1">
+                              <strong>Next Check:</strong> {analysisResult.nextCheck}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </motion.div>
                 )}
               </div>
